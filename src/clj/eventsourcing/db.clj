@@ -2,7 +2,8 @@
   (:require [korma.db :as db]
             [korma.core :refer :all]
             [heroku-database-url-to-jdbc.core :as h]
-            [environ.core :as env]))
+            [environ.core :as env]
+            [clojure.core.logic :refer :all]))
 
 (defn open []
   (let [url (env/env :database-url)

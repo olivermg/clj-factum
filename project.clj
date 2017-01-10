@@ -21,6 +21,8 @@
                  ;;;[sqlingvo "0.8.14"]                                   ;; sql syntax abstraction layer
                  [korma "0.4.3"]                                       ;; sql & db abstraction layer
                  [heroku-database-url-to-jdbc "0.2.2"]                 ;; convert heroku db url to korma compatible config map
+
+                 [org.clojure/core.logic "0.8.11"]
                  ]
 
   :plugins [[lein-cljsbuild "1.1.3"]
