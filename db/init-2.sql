@@ -5,38 +5,68 @@ different approach (inspired by datomic):
  - implement snapshots, so clients don't always have to fetch
    entire data (does that make sense? what other means can we
    think of that reduce need to transmit data between client & server?)
+   - lazy db select (selecting chunks of data)
 */
 
 set client_encoding = 'UTF8';
 
-drop table if exists es_events;
-drop type if exists action;
 
-create type action as enum ( 'add', 'retract' );
+/*drop function if exists es_events_add(bigint, varchar(255), varchar(20), text);*/
+drop sequence if exists es_events_txid;
+drop table if exists es_events;
+
 
 create table es_events (
-       id serial not null,
-       action action not null,
-       entity text not null,
-       instanceid integer not null,
-       attribute text not null,
+       id bigserial not null,
+       tx bigint not null,
+       instanceid bigint not null,
+       attribute varchar(255) not null,
+       action varchar(20) not null default ':add',
        value text not null,
-       inserted_at timestamp with time zone not null default current_timestamp,
 
        primary key (id)
 );
-create index on es_events (instanceid);
-create index on es_events (entity, inserted_at);
-create index on es_events (inserted_at);
+create index on es_events (tx desc);
+
+create sequence es_events_txid;
+
+/*
+create function es_events_add(instanceid bigint, attribute varchar(255), action varchar(20), value text)
+returns bigint
+as $$
+declare
+        txid bigint;
+        result bigint;
+begin
+        select nextval('es_events_txid') into txid;
+        insert into es_events (tx, instanceid, attribute, action, value) values
+               (txid, instanceid, attribute, action, value)
+               returning id into result;
+        return result;
+end;
+$$ language plpgsql;
+*/
 
 
-insert into es_events (action, entity, instanceid, attribute, value, inserted_at) values
-       ('add', 'user', 1, 'name', '"foo2"', '2017-01-03'),
-       ('add', 'user', 1, 'gender', ':m', '2017-01-01'),
-       ('add', 'user', 1, 'gender', ':f', '2017-01-02'),
-       ('add', 'user', 1, 'name', '"foo1"', '2017-01-01'),
-       ('add', 'user', 1, 'birthday', '"1999-09-09"', '2017-01-04'),
+/*
+select es_events_add(1, ':user/name',     ':add', '"foo2"');
+select es_events_add(1, ':user/gender',   ':add', ':m');
+select es_events_add(1, ':user/gender',   ':add', ':f');
+select es_events_add(1, ':user/name',     ':add', '"foo1"');
+select es_events_add(1, ':user/birthday', ':add', '"1999-09-09"');
 
-       ('add', 'user', 2, 'name', '"bar2"', '2017-01-03'),
-       ('add', 'user', 2, 'gender', ':f', '2017-01-02'),
-       ('add', 'user', 2, 'name', '"bar1"', '2017-01-01');
+select es_events_add(2, ':user/name',     ':add', '"bar2"');
+select es_events_add(2, ':user/gender',   ':add', ':f');
+select es_events_add(2, ':user/name',     ':add', '"bar1"');
+*/
+
+insert into es_events (tx, instanceid, attribute, action, value) values
+       (1, 1, ':user/name',     ':add', '"foo2"'),
+       (1, 1, ':user/gender',   ':add', ':m'),
+       (3, 1, ':user/gender',   ':add', ':f'),
+       (3, 1, ':user/name',     ':add', '"foo1"'),
+       (3, 1, ':user/birthday', ':add', '"1999-09-09"'),
+
+       (2, 2, ':user/name',     ':add', '"bar2"'),
+       (2, 2, ':user/gender',   ':add', ':f'),
+       (4, 2, ':user/name',     ':add', '"bar1"');
