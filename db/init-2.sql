@@ -19,7 +19,7 @@ drop table if exists es_events;
 create table es_events (
        id bigserial not null,
        tx bigint not null,
-       instanceid bigint not null,
+       eid bigint not null,
        attribute varchar(255) not null,
        action varchar(20) not null default ':add',
        value text not null,
@@ -31,7 +31,7 @@ create index on es_events (tx desc);
 create sequence es_events_txid;
 
 /*
-create function es_events_add(instanceid bigint, attribute varchar(255), action varchar(20), value text)
+create function es_events_add(eid bigint, attribute varchar(255), action varchar(20), value text)
 returns bigint
 as $$
 declare
@@ -39,8 +39,8 @@ declare
         result bigint;
 begin
         select nextval('es_events_txid') into txid;
-        insert into es_events (tx, instanceid, attribute, action, value) values
-               (txid, instanceid, attribute, action, value)
+        insert into es_events (tx, eid, attribute, action, value) values
+               (txid, eid, attribute, action, value)
                returning id into result;
         return result;
 end;
@@ -60,7 +60,7 @@ select es_events_add(2, ':user/gender',   ':add', ':f');
 select es_events_add(2, ':user/name',     ':add', '"bar1"');
 */
 
-insert into es_events (tx, instanceid, attribute, action, value) values
+insert into es_events (tx, eid, attribute, action, value) values
        (1, 1, ':user/name',     ':add', '"foo2"'),
        (1, 1, ':user/gender',   ':add', ':m'),
        (3, 1, ':user/gender',   ':add', ':f'),

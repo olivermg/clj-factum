@@ -25,10 +25,12 @@
   (fn [a]
     (l/to-stream
      (map #(l/unify a % q)
-          (sort-by :t > db)))))
+          #_(sort-by :t > db)
+          (eventsourcing.db/get-events)
+          ))))
 
-#_(l/run 1 [q]
+#_(l/run 5 [q]
     (l/fresh [e a v t]
-      (l/== a :name)
+      (l/== a :user/name)
       (fact-rel [e a v t])
       (l/== q [e a v t])))
