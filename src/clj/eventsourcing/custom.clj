@@ -6,6 +6,8 @@
 
 (defrecord Fact [e a v t])
 
+(db/defentity es_events)
+
 #_(def db [(->Fact :user :name "foo" 1)
          (->Fact :user :age 23 2)
          (->Fact :user :name "bar" 3)
@@ -13,7 +15,7 @@
 
 
 (defn get-facts [& {:keys [where-criteria]}]
-  (let [query (-> (db/select* evdb/es_events)
+  (let [query (-> (db/select* es_events)
                   (#(if where-criteria
                       (db/where % where-criteria)
                       %))
@@ -34,7 +36,7 @@
                         result)))))]
     (evdb/select-lazy query xf)))
 
-(defn entity [eid]
+(defn get-entity [eid]
   (let [facts (get-facts :where-criteria {:eid eid})]
     (reduce (fn [s {:keys [a v]}]
               (if-not (contains? s a)
@@ -42,6 +44,30 @@
                 s))
             {}
             facts)))
+
+(defn- get-eid []
+  #_(str (java.util.UUID/randomUUID))
+  (long (rand java.lang.Long/MAX_VALUE)))
+
+(defn- get-txid []
+  (-> (db/select (db/sqlfn nextval "es_events_txid"))
+      first
+      :nextval))
+
+(defn add-fact [{:keys [e a v t] :as fact}]
+  (let [data (db/insert es_events
+                        (db/values {:eid (or e (get-eid))
+                                    :attribute (pr-str a)
+                                    :value (pr-str v)
+                                    :tx (or t (get-txid))}))]
+    (->Fact (:eid data) (-> data :attribute edn/read-string)
+            (-> data :value edn/read-string) (:tx data))))
+
+(defn add-facts [facts]
+  (let [txid (get-txid)]
+    (->> (map #(assoc % :t txid) facts)
+         (map add-fact)
+         doall)))
 
 
 (extend-type Fact
@@ -74,3 +100,4 @@
       ;;;(l/== e 1)
       (fact-rel [e a v t])
       (l/== q [e a v t])))
+#_(get-entity 1)

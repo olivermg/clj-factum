@@ -10,7 +10,7 @@
             #_[clojure.edn :as edn]
             #_[eventsourcing.custom :as es]))
 
-(defentity es_events)
+
 
 (defn open []
   (let [url (env/env :database-url)
