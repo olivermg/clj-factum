@@ -21,22 +21,18 @@
 
 (defn select-lazy
   "q is a korma select object, produced via select*"
-  ([q l o xf rf] (when-let [res (-> (select (-> q (limit l) (offset o)))
-                                    (#(if xf
-                                        #_(into [] xf %)
-                                        (transduce xf (or rf conj) %)
-                                        %))
-                                    seq)]
-                   (println "did another select from" o "to" (+ o l))
-                   (concat res (lazy-seq (select-lazy q l (+ o l) xf rf)))))
-  ([q xf rf] (select-lazy q 2 0 xf rf))
-  ([q xf] (select-lazy q 2 0 xf nil))
-  ([q] (select-lazy q 2 0 nil nil)))
+  ([q l o xf] (when-let [res (-> (select (-> q (limit l) (offset o)))
+                                 (#(if xf
+                                     (into [] xf %)
+                                     #_(sequence xf %)
+                                     #_(transduce xf (or rf conj) %)
+                                     %))
+                                 seq)]
+                (println "did another select from" o "to" (+ o l))
+                (concat res (lazy-seq (select-lazy q l (+ o l) xf)))))
+  ([q xf] (select-lazy q 2 0 xf))
+  ([q] (select-lazy q 2 0 nil)))
 
-
-(defn entity [eid]
-  (select es_events
-          (where {:eid eid})))
 
 #_(open)
 #_(entity 1)

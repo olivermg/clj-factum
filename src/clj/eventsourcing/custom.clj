@@ -11,6 +11,39 @@
          (->Fact :user :name "bar" 3)
          (->Fact :user :age 25 4)])
 
+
+(defn get-facts [& {:keys [where-criteria]}]
+  (let [query (-> (db/select* evdb/es_events)
+                  (#(if where-criteria
+                      (db/where % where-criteria)
+                      %))
+                  (db/order :tx :desc))
+        facts (volatile! {}) ;; need to define it outside xf, as select-lazy transduces multiple times
+        xf (comp (map #(->Fact (:eid %)
+                               (-> % :attribute edn/read-string)
+                               (-> % :value edn/read-string)
+                               (:tx %)))
+                 (fn [xf]
+                   (fn
+                     ([] (xf))
+                     ([result] (xf result))
+                     ([result {:keys [e a] :as input}]
+                      (if-not (get-in @facts [e a])
+                        (do (vswap! facts #(assoc-in % [e a] true))
+                            (xf result input))
+                        result)))))]
+    (evdb/select-lazy query xf)))
+
+(defn entity [eid]
+  (let [facts (get-facts :where-criteria {:eid eid})]
+    (reduce (fn [s {:keys [a v]}]
+              (if-not (contains? s a)
+                (assoc s a v)
+                s))
+            {}
+            facts)))
+
+
 (extend-type Fact
   clojure.core.logic.protocols/IUnifyTerms
   (unify-terms [u v s]
@@ -24,42 +57,14 @@
           (when-let [s (l/unify s (first v) (get u (nth [:e :a :v :t] i)))]
             (recur (inc i) (next v) s)))))))
 
-(defn get-events []
-  (let [query (-> (db/select* evdb/es_events)
-                  (db/order :tx :desc))
-        xf (comp (map #(->Fact (:eid %)
-                               (-> % :attribute edn/read-string)
-                               (-> % :value edn/read-string)
-                               (:tx %)))
-                 #_(fn [xf]  ;; does not work, as volatile state only holds during single transduce invocation
-                     (let [entities (volatile! {})]
-                       (fn
-                         ([] (xf))
-                         ([result] (xf result))
-                         ([result {:keys [e a] :as input}]
-                          (println "3:" e a @entities)
-                          (if-not (get-in @entities [e a])
-                            (do (vswap! entities #(assoc-in % [e a] true))
-                                (xf result input))
-                            result))))))
-        entities (volatile! {})
-        conj-entity (fn
-                      ([] [])
-                      ([s] s)
-                      ([s {:keys [e a] :as entity}]
-                       (if-not (get-in @entities [e a])
-                         (do (vswap! entities #(assoc-in % [e a] true))
-                             (conj s entity))
-                         s)))]
-    (evdb/select-lazy query xf conj-entity)))
-
 (defn fact-rel [q]
   (fn [a]
     (l/to-stream
      (map #(l/unify a % q)
           #_(sort-by :t > db)
-          (get-events)
+          (get-facts)
           ))))
+
 
 #_(evdb/open)
 #_(get-events)
