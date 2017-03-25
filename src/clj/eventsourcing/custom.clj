@@ -56,7 +56,10 @@
 
 (defn- new-eid []
   #_(str (java.util.UUID/randomUUID))
-  (long (rand java.lang.Long/MAX_VALUE)))
+  #_(long (rand java.lang.Long/MAX_VALUE))
+  (-> (db/select (db/sqlfn nextval "es_events_eid"))
+      first
+      :nextval))
 
 (defn- new-txid []
   (-> (db/select (db/sqlfn nextval "es_events_txid"))
@@ -75,7 +78,7 @@
             (:value data) (:tx data))))
 
 (defn add-facts [facts]
-  (let [txid (get-txid)]
+  (let [txid (new-txid)]
     #_(->> (map #(assoc % :t txid) facts)
            (map save-fact)
          doall)
@@ -84,7 +87,7 @@
               facts)))
 
 (defn retract-facts [facts]
-  (let [txid (get-txid)]
+  (let [txid (new-txid)]
     (sequence (comp (map #(assoc % :t txid))
                     (map #(save-fact % :action :retract)))
               facts)))

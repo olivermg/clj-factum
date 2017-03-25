@@ -29,6 +29,7 @@ create table es_events (
 create index on es_events (tx desc);
 
 create sequence es_events_txid;
+create sequence es_events_eid;
 
 /*
 create function es_events_add(eid bigint, attribute varchar(255), action varchar(20), value text)
