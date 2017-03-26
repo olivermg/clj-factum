@@ -4,6 +4,11 @@
             [korma.core :as db]
             [eventsourcing.db :as evdb]))
 
+
+;;;
+;;; EVENTSOURCING STUFF
+;;;
+
 (defrecord Fact [e a v t])
 
 (db/defentity es_events
@@ -93,6 +98,34 @@
               facts)))
 
 
+;;;
+;;; APPLICATION SPECIFIC STUFF
+;;;
+
+(defrecord User [])
+(defrecord Booking [])
+
+(defmethod print-method User [v ^java.io.Writer w]
+  (print-method (into {} (dissoc v :bookings)) w))
+
+(defmethod print-method Booking [v ^java.io.Writer w]
+  (print-method (into {} (dissoc v :users)) w))
+
+(declare get-user)
+(declare get-booking)
+
+(defn get-user [eid]
+  (map->User (merge (get-entity eid)
+                    {:bookings (lazy-seq [(get-booking 2)])})))
+
+(defn get-booking [eid]
+  (map->Booking (get-entity eid)))
+
+
+;;;
+;;; LOGIC STUFF
+;;;
+
 (extend-type Fact
   clojure.core.logic.protocols/IUnifyTerms
   (unify-terms [u v s]
@@ -123,4 +156,12 @@
       ;;;(l/== e 1)
       (fact-rel [e a v t])
       (l/== q [e a v t])))
+#_(l/run* [q]
+    (l/fresh [e a v t e2 a2 v2 t2]
+      (fact-rel [e a v t])
+      (fact-rel [e2 a2 v2 t2])
+      (l/== e 1)
+      (l/== v2 e)
+      (l/== a2 :comment/author)
+      (l/== q [e2 a2 v2 t2])))
 #_(get-entity 1)

@@ -11,6 +11,9 @@
             #_[eventsourcing.custom :as es]))
 
 
+;;;
+;;; GENERIC DB STUFF
+;;;
 
 (defn open []
   (let [url (env/env :database-url)
