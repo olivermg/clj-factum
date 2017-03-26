@@ -12,6 +12,7 @@ set client_encoding = 'UTF8';
 
 
 /*drop function if exists es_events_add(bigint, varchar(255), varchar(20), text);*/
+drop sequence if exists es_events_eid;
 drop sequence if exists es_events_txid;
 drop table if exists es_events;
 
@@ -70,4 +71,11 @@ insert into es_events (tx, eid, attribute, action, value) values
 
        (2, 2, ':user/name',     ':add', '"bar2"'),
        (2, 2, ':user/gender',   ':add', ':f'),
-       (4, 2, ':user/name',     ':add', '"bar1"');
+       (4, 2, ':user/name',     ':add', '"bar1"'),
+
+       (5, 3, ':comment/author', ':add', 1),
+       (5, 3, ':comment/text',   ':add', '"comment1_1"'),
+       (6, 4, ':comment/author', ':add', 1),
+       (6, 4, ':comment/text',   ':add', '"comment1_2"'),
+       (7, 5, ':comment/author', ':add', 2),
+       (7, 5, ':comment/text',   ':add', '"comment2_1"');
