@@ -75,7 +75,10 @@ insert into es_events (tx, eid, attribute, action, value) values
 
        (5, 3, ':comment/author', ':add', 1),
        (5, 3, ':comment/text',   ':add', '"comment1_1"'),
+       (5, 3, ':comment/date',   ':add', '#inst "2017-01-01"'),
        (6, 4, ':comment/author', ':add', 1),
        (6, 4, ':comment/text',   ':add', '"comment1_2"'),
+       (6, 4, ':comment/date',   ':add', '#inst "2017-02-01"'),
        (7, 5, ':comment/author', ':add', 2),
-       (7, 5, ':comment/text',   ':add', '"comment2_1"');
+       (7, 5, ':comment/text',   ':add', '"comment2_1"'),
+       (7, 5, ':comment/date',   ':add', '#inst "2017-03-01"');
