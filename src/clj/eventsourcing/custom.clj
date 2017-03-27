@@ -100,6 +100,40 @@
 
 
 ;;;
+;;; LOGIC STUFF
+;;;
+
+(lp/db-rel fact e a v t)
+
+(extend-type Fact
+  clojure.core.logic.protocols/IUnifyTerms
+  (unify-terms [u v s]
+    ;;;(println "U:" u ", V:" v ", S:" s)
+    (when (and (instance? clojure.lang.PersistentVector v)
+               (> (count v) 1))
+      (loop [i 0 v v s s]
+        ;;;(println "I:" i ", V:" v ", S:" s)
+        (if (empty? v)
+          s
+          (when-let [s (l/unify s (first v) (get u (nth [:e :a :v :t] i)))]
+            (recur (inc i) (next v) s)))))))
+
+(defn fact-rel [q]
+  (fn [a]
+    (l/to-stream
+     (map #(l/unify a % q)
+          #_(sort-by :t > db)
+          (get-facts)
+          ))))
+
+(defn get-logic-db []
+  (->> (get-facts)
+       (into [] (map (fn [{:keys [e a v t]}]
+                       [fact e a v t])))
+       (apply lp/db)))
+
+
+;;;
 ;;; APPLICATION SPECIFIC STUFF
 ;;;
 
@@ -123,32 +157,6 @@
   (map->Booking (get-entity eid)))
 
 
-;;;
-;;; LOGIC STUFF
-;;;
-
-(extend-type Fact
-  clojure.core.logic.protocols/IUnifyTerms
-  (unify-terms [u v s]
-    ;;;(println "U:" u ", V:" v ", S:" s)
-    (when (and (instance? clojure.lang.PersistentVector v)
-               (> (count v) 1))
-      (loop [i 0 v v s s]
-        ;;;(println "I:" i ", V:" v ", S:" s)
-        (if (empty? v)
-          s
-          (when-let [s (l/unify s (first v) (get u (nth [:e :a :v :t] i)))]
-            (recur (inc i) (next v) s)))))))
-
-(defn fact-rel [q]
-  (fn [a]
-    (l/to-stream
-     (map #(l/unify a % q)
-          #_(sort-by :t > db)
-          (get-facts)
-          ))))
-
-
 #_(evdb/open)
 #_(get-events)
 #_(l/run* [q]
@@ -167,7 +175,6 @@
       (l/== q [e2 a2 v2 t2])))
 #_(get-entity 1)
 
-#_(lp/db-rel fact e a v t)
 #_(def facts
     (lp/db
      [fact 10 :user/name "walter" 1]
@@ -179,13 +186,13 @@
      [fact 21 :comment/text "comment walter 2" 3]
      [fact 21 :comment/date #inst"2017-01-02" 3]
      [fact 21 :comment/author 10 3]))
-#_(lp/with-db facts
+#_(lp/with-db (get-logic-db)
     (l/run* [q]
-      (l/fresh [eu au vu tu
-                ec ac vc tc]
-        (fact eu au vu tu)
-        (l/== eu 10)
-        (fact ec :comment/author eu tc)
+      (l/fresh [eu vu
+                ec ac vc]
+        (l/== vu "foo1")
+        (fact eu :user/name vu (l/lvar))
+        (fact ec :comment/author eu (l/lvar))
         (l/== ac :comment/text)
-        (fact ec ac vc tc)
-        (l/== q [ec ac vc tc]))))
+        (fact ec ac vc (l/lvar))
+        (l/== q [ec ac vc (l/lvar)]))))
