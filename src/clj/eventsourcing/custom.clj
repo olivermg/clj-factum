@@ -1,6 +1,7 @@
 (ns eventsourcing.custom
   (:require [clojure.edn :as edn]
             [clojure.core.logic :as l]
+            [clojure.core.logic.pldb :as lp]
             [korma.core :as db]
             [eventsourcing.db :as evdb]))
 
@@ -165,3 +166,26 @@
       (l/== a2 :comment/author)
       (l/== q [e2 a2 v2 t2])))
 #_(get-entity 1)
+
+#_(lp/db-rel fact e a v t)
+#_(def facts
+    (lp/db
+     [fact 10 :user/name "walter" 1]
+
+     [fact 20 :comment/text "comment walter 1" 2]
+     [fact 20 :comment/date #inst"2017-01-01" 2]
+     [fact 20 :comment/author 10 2]
+
+     [fact 21 :comment/text "comment walter 2" 3]
+     [fact 21 :comment/date #inst"2017-01-02" 3]
+     [fact 21 :comment/author 10 3]))
+#_(lp/with-db facts
+    (l/run* [q]
+      (l/fresh [eu au vu tu
+                ec ac vc tc]
+        (fact eu au vu tu)
+        (l/== eu 10)
+        (fact ec :comment/author eu tc)
+        (l/== ac :comment/text)
+        (fact ec ac vc tc)
+        (l/== q [ec ac vc tc]))))
