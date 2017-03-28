@@ -2,6 +2,7 @@
   (:require [clojure.edn :as edn]
             [clojure.core.logic :as l]
             [clojure.core.logic.pldb :as lp]
+            [clojure.core.logic.fd :as lfd]
             [korma.core :as db]
             [eventsourcing.db :as evdb]))
 
@@ -10,7 +11,7 @@
 ;;; EVENTSOURCING STUFF
 ;;;
 
-(defrecord Fact [e a v t])
+;;;(defrecord Fact [e a v t])
 
 (db/defentity es_events
   (db/prepare (fn [v] (reduce #(update %1 %2 pr-str)
@@ -25,13 +26,16 @@
 
 
 (defn get-facts [& {:keys [where-criteria]}]
+  "Retrieves all facts, potentially narrowed by specified criteria."
   (let [query (-> (db/select* es_events)
                   (#(if where-criteria
                       (db/where % where-criteria)
                       %))
                   (db/order :tx :desc))
-        facts (volatile! {}) ;; need to define it outside xf, as select-lazy transduces multiple times
-        xf (comp (fn [xf]
+        ;;;facts (volatile! {}) ;; need to define it outside xf, as select-lazy transduces multiple times
+        xf (map (fn [{:keys [eid attribute value tx action]}]
+                  [eid attribute value tx action]))
+        #_(comp (fn [xf]
                    (fn
                      ([] (xf))
                      ([result] (xf result))
@@ -51,8 +55,29 @@
                                (:tx %))))]
     (evdb/select-lazy query xf)))
 
+(defn project-facts [facts]
+  "Projects given facts to a given timestamp."
+  (let [facts* (volatile! {})
+        xf (fn [xf]
+             (fn
+               ([] (xf))
+               ([result] (xf result))
+               ([result [e a v t action :as input]]
+                (case action
+                  :add (case (get-in @facts* [e a])
+                         true result
+                         ::retracted (do (vswap! facts* #(update-in % [e] dissoc a))
+                                         result)
+                         nil (do (vswap! facts* #(assoc-in % [e a] true))
+                                 (xf result (take 4 input))))
+                  :retract (do (vswap! facts* #(assoc-in % [e a] ::retracted))
+                               result)))))]
+    (into [] xf facts)))
+
 (defn get-entity [eid]
-  (let [facts (get-facts :where-criteria {:eid eid})]
+  "Retrieves entire entity."
+  (let [facts (-> (get-facts :where-criteria {:eid eid})
+                  project-facts)]
     (reduce (fn [s {:keys [a v]}]
               (if-not (contains? s a)
                 (assoc s a v)
@@ -80,8 +105,9 @@
                                     :value v
                                     :tx (or t (new-txid))
                                     :action action}))]
-    (->Fact (:eid data) (:attribute data)
-            (:value data) (:tx data))))
+    #_(->Fact (:eid data) (:attribute data)
+              (:value data) (:tx data))
+    [(:eid data) (:attribute data) (:value data) (:tx data)]))
 
 (defn add-facts [facts]
   (let [txid (new-txid)]
@@ -128,8 +154,10 @@
 
 (defn get-logic-db []
   (->> (get-facts)
-       (into [] (map (fn [{:keys [e a v t]}]
-                       [fact e a v t])))
+       project-facts
+       #_(into [] (map (fn [{:keys [e a v t]}]
+                         [fact e a v t])))
+       (into [] (map #(vec (cons fact %))))
        (apply lp/db)))
 
 
@@ -175,17 +203,6 @@
       (l/== q [e2 a2 v2 t2])))
 #_(get-entity 1)
 
-#_(def facts
-    (lp/db
-     [fact 10 :user/name "walter" 1]
-
-     [fact 20 :comment/text "comment walter 1" 2]
-     [fact 20 :comment/date #inst"2017-01-01" 2]
-     [fact 20 :comment/author 10 2]
-
-     [fact 21 :comment/text "comment walter 2" 3]
-     [fact 21 :comment/date #inst"2017-01-02" 3]
-     [fact 21 :comment/author 10 3]))
 #_(lp/with-db (get-logic-db)
     (l/run* [q]
       (l/fresh [eu vu
