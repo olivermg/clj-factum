@@ -57,33 +57,23 @@
 
 (defn project-facts [facts]
   "Projects given facts to a given timestamp."
-  (let [facts* (volatile! {})
+  (let [;;;facts* (volatile! {})
         xf (fn [xf]
-             (fn
-               ([] (xf))
-               ([result] (xf result))
-               ([result [e a v t action :as input]]
-                (case action
-                  :add (case (get-in @facts* [e a])
-                         true result
-                         ::retracted (do (vswap! facts* #(update-in % [e] dissoc a))
-                                         result)
-                         nil (do (vswap! facts* #(assoc-in % [e a] true))
-                                 (xf result (take 4 input))))
-                  :retract (do (vswap! facts* #(assoc-in % [e a] ::retracted))
-                               result)))))]
+             (let [facts* (volatile! {})]
+               (fn
+                 ([] (xf))
+                 ([result] (xf result))
+                 ([result [e a v t action :as input]]
+                  (case action
+                    :add (case (get-in @facts* [e a])
+                           true result
+                           ::retracted (do (vswap! facts* #(update-in % [e] dissoc a))
+                                           result)
+                           nil (do (vswap! facts* #(assoc-in % [e a] true))
+                                   (xf result (take 4 input))))
+                    :retract (do (vswap! facts* #(assoc-in % [e a] ::retracted))
+                                 result))))))]
     (into [] xf facts)))
-
-(defn get-entity [eid]
-  "Retrieves entire entity."
-  (let [facts (-> (get-facts :where-criteria {:eid eid})
-                  project-facts)]
-    (reduce (fn [s [e a v t]]
-              (if-not (contains? s a)
-                (assoc s a v)
-                s))
-            {}
-            facts)))
 
 (defn- new-eid []
   #_(str (java.util.UUID/randomUUID))
@@ -161,27 +151,46 @@
 
 
 ;;;
+;;; GENERIC ENTITY-AWARE STUFF:
+;;;
+
+(defn get-entity [eid]
+  "Retrieves entire entity."
+  (let [db (get-logic-db)
+        efacts (lp/with-db db
+                 (l/run* [q]
+                   (l/fresh [e a v]
+                     (fact e a v (l/lvar))
+                     (l/== e eid)
+                     (l/== q [e a v (l/lvar)]))))]
+    (reduce (fn [s [e a v t]]
+              (assoc s a v))
+            {}
+            efacts)))
+
+
+;;;
 ;;; APPLICATION SPECIFIC STUFF
 ;;;
 
 (defrecord User [])
-(defrecord Booking [])
+(defrecord Comment [])
 
 (defmethod print-method User [v ^java.io.Writer w]
-  (print-method (into {} (dissoc v :bookings)) w))
+  (print-method (into {} (dissoc v :comments)) w))
 
-(defmethod print-method Booking [v ^java.io.Writer w]
+(defmethod print-method Comment [v ^java.io.Writer w]
   (print-method (into {} (dissoc v :users)) w))
 
 (declare get-user)
-(declare get-booking)
+(declare get-comment)
 
 (defn get-user [eid]
   (map->User (merge (get-entity eid)
-                    {:bookings (lazy-seq [(get-booking 2)])})))
+                    {:comments (lazy-seq [(get-comment 3)])})))
 
-(defn get-booking [eid]
-  (map->Booking (get-entity eid)))
+(defn get-comment [eid]
+  (map->Comment (get-entity eid)))
 
 
 #_(evdb/open)
@@ -201,6 +210,8 @@
       (l/== a2 :comment/author)
       (l/== q [e2 a2 v2 t2])))
 #_(get-entity 1)
+
+#_(get-user 2)
 
 #_(lp/with-db (get-logic-db)
     (l/run* [q]
