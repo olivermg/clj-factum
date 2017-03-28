@@ -3,11 +3,26 @@
 
 ## Terms
 
-- DiskDB:
-  Underlying Database (e.g. PostgreSQL).
+- Fact:
+  A single datum in a DB. Effectively a tuple consisting of
+    - entity-id (e)
+    - attribute (a)
+    - value (v)
+    - transaction (t)
+
+- ExternalDB:
+  Underlying Database (e.g. PostgreSQL) used to provide storage
+  mechanisms for our data.
+
+- Topic:
+  A criteria that applies to certain facts in a DB.
 
 - MemDB:
-  Copy of DiskDB in memory of Application.
+  Copy of ExternalDB in memory of Application, potentially containing only
+  parts of ExternalDB for a specific topic.
+
+- MemDBPool:
+  Container for zero, one or more MemDBs.
 
 
 ## Ideas
@@ -39,11 +54,11 @@
   that acts as a wrapper (maybe as macros) on core.logic syntax.
 
 - MemDB topic separation:
-  Maybe it makes sense to build a MemDB from the DiskDB by only retrieving
+  Maybe it makes sense to build a MemDB from the ExternalDB by only retrieving
   facts belonging to a certain topic (e.g. a specific customer). Via this way,
   overly expensive memory consumption is being avoided.
   Thus, the application would have multiple MemDBs, each for a certain topic.
   The app could maintain a "MemDBPool", keeping only the most recently used MemDBs
   in memory while forgetting those that haven't been used in a while.
   When a request comes in that demands for a MemDB that is not in the "MemDBPool",
-  the app needs to retrieve that one from the DiskDB.
+  the app needs to retrieve that one from the ExternalDB.
