@@ -27,6 +27,13 @@
 
 ## Layers
 
+Should be separated into
+
+- Reading
+- Writing
+
+Rough topics:
+
 1. DB Layer that talks to ExternalDB, without knowing anything about
    facts etc. (e.g. `select-lazy`).
 
@@ -78,6 +85,11 @@
 
 - Resolving entities:
   We need some means by which we can retrieve an entire entity.
+
+- Schemas:
+  When defining schemas for entities, that would avoid lots of work, as the
+  entity resolving logic would know when an entity has been found in it's
+  entirety. Without schemas, it will always have to look through all facts.
 
 - Lazy relations:
   It would be nice to be able to traverse related entities. For that, we need
