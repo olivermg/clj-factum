@@ -72,6 +72,7 @@ insert into es_events (tx, eid, attribute, action, value) values
        (2, 2, ':user/name',     ':add', '"bar2"'),
        (2, 2, ':user/gender',   ':add', ':f'),
        (4, 2, ':user/name',     ':add', '"bar1"'),
+       (8, 2, ':user/name',     ':retract', '"bar1"'),
 
        (5, 3, ':comment/author', ':add', 1),
        (5, 3, ':comment/text',   ':add', '"comment1_1"'),
