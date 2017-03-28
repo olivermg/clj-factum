@@ -25,6 +25,17 @@
   Container for zero, one or more MemDBs.
 
 
+## Layers
+
+1. DB Layer that talks to ExternalDB, without knowing anything about
+   facts etc. (e.g. `select-lazy`).
+
+2. Layer that knows about facts and how to retrieve & store those
+   (e.g. `add-fact`, `get-fact`).
+
+3. Layer that knows how to handle facts in terms of core.logic.
+
+
 ## Ideas
 
 - Snapshots:
