@@ -21,7 +21,7 @@
   Copy of ExternalDB in memory of Application, potentially containing only
   parts of ExternalDB for a specific topic.
 
-- MemDBPool:
+- MemDBCache:
   Container for zero, one or more MemDBs.
 
 
@@ -58,7 +58,7 @@
   facts belonging to a certain topic (e.g. a specific customer). Via this way,
   overly expensive memory consumption is being avoided.
   Thus, the application would have multiple MemDBs, each for a certain topic.
-  The app could maintain a "MemDBPool", keeping only the most recently used MemDBs
+  The app could maintain a "MemDBCache", keeping only the most recently used MemDBs
   in memory while forgetting those that haven't been used in a while.
-  When a request comes in that demands for a MemDB that is not in the "MemDBPool",
+  When a request comes in that demands for a MemDB that is not in the "MemDBCache",
   the app needs to retrieve that one from the ExternalDB.
