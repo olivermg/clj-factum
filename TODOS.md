@@ -35,6 +35,8 @@
 
 3. Layer that knows how to handle facts in terms of core.logic.
 
+4. Application specific layer that defines business logical entities?
+
 
 ## Ideas
 
@@ -73,3 +75,13 @@
   in memory while forgetting those that haven't been used in a while.
   When a request comes in that demands for a MemDB that is not in the "MemDBCache",
   the app needs to retrieve that one from the ExternalDB.
+
+- Resolving entities:
+  We need some means by which we can retrieve an entire entity.
+
+- Lazy relations:
+  It would be nice to be able to traverse related entities. For that, we need
+  to maintain `lazy-seq`s within an entity that retrieve the related entities
+  when traversed.
+  We also need to take care of that we don't end up in endless recursions when
+  trying to print (define `print-method`) or serialize (?) entities.
