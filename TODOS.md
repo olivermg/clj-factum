@@ -37,3 +37,13 @@
 - Datalog language:
   For less verbose querying, we might develop a query language like Datalog
   that acts as a wrapper (maybe as macros) on core.logic syntax.
+
+- MemDB topic separation:
+  Maybe it makes sense to build a MemDB from the DiskDB by only retrieving
+  facts belonging to a certain topic (e.g. a specific customer). Via this way,
+  overly expensive memory consumption is being avoided.
+  Thus, the application would have multiple MemDBs, each for a certain topic.
+  The app could maintain a "MemDBPool", keeping only the most recently used MemDBs
+  in memory while forgetting those that haven't been used in a while.
+  When a request comes in that demands for a MemDB that is not in the "MemDBPool",
+  the app needs to retrieve that one from the DiskDB.
