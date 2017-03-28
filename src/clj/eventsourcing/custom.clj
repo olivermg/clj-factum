@@ -78,7 +78,7 @@
   "Retrieves entire entity."
   (let [facts (-> (get-facts :where-criteria {:eid eid})
                   project-facts)]
-    (reduce (fn [s {:keys [a v]}]
+    (reduce (fn [s [e a v t]]
               (if-not (contains? s a)
                 (assoc s a v)
                 s))
@@ -97,8 +97,7 @@
       first
       :nextval))
 
-(defn- save-fact [{:keys [e a v t] :as fact} & {:keys [action]
-                                                :or {action :add}}]
+(defn- save-fact [[e a v t action :as fact]]
   (let [data (db/insert es_events
                         (db/values {:eid (or e (new-eid))
                                     :attribute a
@@ -131,7 +130,7 @@
 
 (lp/db-rel fact e a v t)
 
-(extend-type Fact
+#_(extend-type Fact
   clojure.core.logic.protocols/IUnifyTerms
   (unify-terms [u v s]
     ;;;(println "U:" u ", V:" v ", S:" s)
@@ -144,7 +143,7 @@
           (when-let [s (l/unify s (first v) (get u (nth [:e :a :v :t] i)))]
             (recur (inc i) (next v) s)))))))
 
-(defn fact-rel [q]
+#_(defn fact-rel [q]
   (fn [a]
     (l/to-stream
      (map #(l/unify a % q)
@@ -186,7 +185,7 @@
 
 
 #_(evdb/open)
-#_(get-events)
+#_(-> (get-facts) project-facts)
 #_(l/run* [q]
     (l/fresh [e a v t]
       (l/== a :user/name)
