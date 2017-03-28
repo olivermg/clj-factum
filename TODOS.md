@@ -97,3 +97,21 @@ Rough topics:
   when traversed.
   We also need to take care of that we don't end up in endless recursions when
   trying to print (define `print-method`) or serialize (?) entities.
+
+
+## Examples
+
+### Flow of Data
+
+``` text
+(get-facts) [retrieves all facts]
+    |
+    v
+(project-facts) [projects to relevant facts]
+    |
+    v
+(get-logic-db) [makes data a fact db suitable for core.logic]
+    |
+    v
+e.g. (get-entity) [applies core.logic program to data to retrieve relevant data]
+```
