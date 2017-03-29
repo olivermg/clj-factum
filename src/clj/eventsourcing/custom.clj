@@ -168,6 +168,24 @@
             {}
             efacts)))
 
+(defn get-entities [attribute value]
+  "Retrieves entire entities."
+  (let [db (get-logic-db)
+        efacts (lp/with-db db
+                 (l/run* [q]
+                   (l/fresh [e a v e2 a2 v2]
+                     (fact e a v (l/lvar))
+                     (l/== a attribute)
+                     (l/== v value)
+                     (fact e2 a2 v2 (l/lvar))
+                     (l/== e2 e)
+                     (l/== q [e2 a2 v2 (l/lvar)]))))]
+    (-> (reduce (fn [s [e a v t]]
+                  (assoc-in s [e a] v))
+                {}
+                efacts)
+        vals)))
+
 
 ;;;
 ;;; APPLICATION SPECIFIC STUFF
@@ -187,7 +205,7 @@
 
 (defn get-user [eid]
   (map->User (merge (get-entity eid)
-                    {:comments (lazy-seq [(get-comment 3)])})))
+                    {:comments (lazy-seq (get-entities :comment/author eid))})))
 
 (defn get-comment [eid]
   (map->Comment (get-entity eid)))
