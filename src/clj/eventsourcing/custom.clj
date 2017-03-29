@@ -208,7 +208,8 @@
                     {:comments (lazy-seq (get-entities :comment/author eid))})))
 
 (defn get-comment [eid]
-  (map->Comment (get-entity eid)))
+  (let [e (get-entity eid)]
+    (map->Comment (merge e {:users (lazy-seq [(get-entity (:comment/author e))])}))))
 
 
 #_(evdb/open)
