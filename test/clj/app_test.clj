@@ -43,10 +43,12 @@
     (is (not-empty (find-duplicate-facts fs)))))
 
 (deftest project-facts-1
-  (let [pfs (-> (ff/get-facts) ff/project-facts)]
+  (let [fs (ff/get-facts )
+        pfs (ff/project-facts fs)]
     (is (sequential? pfs))
     (is (not-empty pfs))
-    (is (empty? (find-duplicate-facts pfs)))))
+    (is (empty? (find-duplicate-facts pfs)))
+    (is (< (count pfs) (count fs)))))
 
 
 #_(fe/get-entity ldb 1)
