@@ -1,4 +1,12 @@
-# Eventsourcing
+# clj-factum
+
+Eventsourcing made simple for common databases (Postgres for now).
+
+
+## State
+
+This project is subject to change in every matter you can imagine. There
+is no stable API or anything like that yet. I am working on it.
 
 
 ## Terms
@@ -29,10 +37,10 @@
 
 Should be separated into
 
-- Reading
+- Reading (potentially multiple ways)
 - Writing
 
-Rough topics:
+Rough layout:
 
 1. DB Layer that talks to ExternalDB, without knowing anything about
    facts etc. (e.g. `select-lazy`).

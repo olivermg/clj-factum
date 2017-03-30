@@ -1,4 +1,4 @@
-(ns eventsourcing.db
+(ns ow.factum.db
   (:refer-clojure :rename {update update-clj
                            == ==-clj})
   (:require [korma.db :as db]

@@ -5,12 +5,12 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.9.89" :scope "provided"]
-                 [com.cognitect/transit-clj "0.8.285"]
-                 [ring "1.4.0"]
-                 [ring/ring-defaults "0.2.1"]
-                 [bk/ring-gzip "0.1.1"]
-                 [ring.middleware.logger "0.5.0"]
+                 ;;;[org.clojure/clojurescript "1.9.89" :scope "provided"]
+                 ;;;[com.cognitect/transit-clj "0.8.285"]
+                 ;;;[ring "1.4.0"]
+                 ;;;[ring/ring-defaults "0.2.1"]
+                 ;;;[bk/ring-gzip "0.1.1"]
+                 ;;;[ring.middleware.logger "0.5.0"]
                  ;;;[compojure "1.5.0"]
                  [environ "1.0.3"]
                  ;;;[org.omcljs/om "1.0.0-alpha36"]
@@ -25,28 +25,28 @@
                  [org.clojure/core.logic "0.8.11"]
                  ]
 
-  :plugins [[lein-cljsbuild "1.1.3"]
+  :plugins [#_[lein-cljsbuild "1.1.3"]
             [lein-environ "1.0.3"]]
 
   :min-lein-version "2.6.1"
 
-  :source-paths ["src/clj" "src/cljs" "src/cljc"]
+  :source-paths ["src/clj" #_"src/cljs" #_"src/cljc"]
 
-  :test-paths ["test/clj" "test/cljc"]
+  :test-paths ["test/clj" #_"test/cljc"]
 
-  :clean-targets ^{:protect false} [:target-path :compile-path "resources/public/js"]
+  :clean-targets ^{:protect false} [:target-path :compile-path #_"resources/public/js"]
 
-  :uberjar-name "eventsourcing.jar"
+  :uberjar-name "clj-factum.jar"
 
   ;; Use `lein run` if you just want to start a HTTP server, without figwheel
-  :main eventsourcing.server
+  ;;;:main eventsourcing.server
 
   ;; nREPL by default starts in the :main namespace, we want to start in `user`
   ;; because that's where our development helper functions like (run) and
   ;; (browser-repl) live.
   :repl-options {:init-ns user}
 
-  :cljsbuild {:builds
+  #_:cljsbuild #_{:builds
               [{:id "app"
                 :source-paths ["src/cljs" "src/cljc"]
 
@@ -81,7 +81,7 @@
   ;; merging. So don't put a :figwheel section under the :dev profile, it will
   ;; not be picked up, instead configure figwheel here on the top level.
 
-  :figwheel {;; :http-server-root "public"       ;; serve static assets from resources/public/
+  #_:figwheel #_{;; :http-server-root "public"       ;; serve static assets from resources/public/
              ;; :server-port 3449                ;; default
              ;; :server-ip "127.0.0.1"           ;; default
              :css-dirs ["resources/public/css"]  ;; watch and update CSS
@@ -110,25 +110,25 @@
 
              :server-logfile "log/figwheel.log"}
 
-  :doo {:build "test"}
+  ;;;:doo {:build "test"}
 
   :profiles {:dev
-             {:dependencies [[figwheel "0.5.4-4"]
-                             [figwheel-sidecar "0.5.4-4"]
-                             [com.cemerick/piggieback "0.2.1"]
+             {:dependencies [#_[figwheel "0.5.4-4"]
+                             #_[figwheel-sidecar "0.5.4-4"]
+                             #_[com.cemerick/piggieback "0.2.1"]
                              [org.clojure/tools.nrepl "0.2.12"]]
 
-              :plugins [[lein-figwheel "0.5.4-4"]
-                        [lein-doo "0.1.6"]]
+              :plugins [#_[lein-figwheel "0.5.4-4"]
+                        #_[lein-doo "0.1.6"]]
 
               :source-paths ["dev"]
-              :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
+              #_:repl-options #_{:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
 
              :uberjar
-             {:source-paths ^:replace ["src/clj" "src/cljc"]
-              :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
+             {:source-paths ^:replace ["src/clj" #_"src/cljc"]
+              :prep-tasks ["compile" #_["cljsbuild" "once" "min"]]
               :hooks []
               :omit-source true
               :aot :all}
 
-             :default [:base :system :user :provided :dev :eventsourcing-dev]})
+             :default [:base :system :user :provided :dev :clj-factum-dev]})

@@ -1,11 +1,11 @@
-(ns eventsourcing.custom
+(ns ow.factum.custom
   (:require [clojure.edn :as edn]
             [clojure.core.logic :as l]
             [clojure.core.logic.pldb :as lp]
             [clojure.core.logic.fd :as lfd]
             [clojure.string :as str]
             [korma.core :as db]
-            [eventsourcing.db :as evdb]))
+            [ow.factum.db :as evdb]))
 
 
 ;;;
