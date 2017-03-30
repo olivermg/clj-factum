@@ -3,6 +3,7 @@
             [clojure.core.logic :as l]
             [clojure.core.logic.pldb :as lp]
             [clojure.core.logic.fd :as lfd]
+            [clojure.string :as str]
             [korma.core :as db]
             [eventsourcing.db :as evdb]))
 
@@ -165,7 +166,7 @@
                      (l/== q [e a v (l/lvar)]))))]
     (reduce (fn [s [e a v t]]
               (assoc s a v))
-            {}
+            {:db/eid eid}
             efacts)))
 
 (defn get-entities [attribute value]
@@ -180,36 +181,58 @@
                      (fact e2 a2 v2 (l/lvar))
                      (l/== e2 e)
                      (l/== q [e2 a2 v2 (l/lvar)]))))]
-    (-> (reduce (fn [s [e a v t]]
-                  (assoc-in s [e a] v))
-                {}
-                efacts)
-        vals)))
+    (->> (reduce (fn [s [e a v t]]
+                   (assoc-in s [e a] v))
+                 {}
+                 efacts)
+         (map (fn [[k v]]
+                (assoc v :db/eid k))))))
+
+
+;;;
+;;; TOOLS FOR APPLICATION SPECIFIC STUFF
+;;;
+
+(defmacro defentity [name [& fields] & {:keys [transform]}]
+  (let [name (clojure.core/name name)
+        recsym (-> name str/capitalize symbol)
+        mapctorsym (-> (str "map->" (str/capitalize name)) symbol)
+        sfields (into #{} (comp (map clojure.core/name)
+                                (map #(keyword name %)))
+                      fields)
+        getsym (-> (str "get-" name) symbol)
+        getsymm (-> (str "get-" name "s") symbol)
+        transform #(if transform
+                     `(~transform ~%)
+                     %)]
+    `(do (defrecord ~recsym [~@fields])
+
+         (defmethod print-method ~recsym [v# ^java.io.Writer w#]
+           (print-method (select-keys v# ~sfields) w#))
+
+         (defn ~getsym [~'eid]
+           (let [~'e (get-entity ~'eid)]
+             (~mapctorsym ~(transform `~'e))))
+
+         (defn ~getsymm [~'attribute ~'value]
+           (let [es# (get-entities ~'attribute ~'value)]
+             (sequence (map (fn [~'e]
+                              (~mapctorsym ~(transform `~'e))))
+                       es#))))))
 
 
 ;;;
 ;;; APPLICATION SPECIFIC STUFF
 ;;;
 
-(defrecord User [])
-(defrecord Comment [])
+(declare get-user get-users)
+(declare get-comment get-comments)
 
-(defmethod print-method User [v ^java.io.Writer w]
-  (print-method (into {} (dissoc v :comments)) w))
+(defentity user [name gender birthday]
+  :transform #(assoc % :comments (lazy-seq (get-comments :comment/author (:db/eid %)))))
 
-(defmethod print-method Comment [v ^java.io.Writer w]
-  (print-method (into {} (dissoc v :users)) w))
-
-(declare get-user)
-(declare get-comment)
-
-(defn get-user [eid]
-  (map->User (merge (get-entity eid)
-                    {:comments (lazy-seq (get-entities :comment/author eid))})))
-
-(defn get-comment [eid]
-  (let [e (get-entity eid)]
-    (map->Comment (merge e {:users (lazy-seq [(get-entity (:comment/author e))])}))))
+(defentity comment [date text author]
+  :transform #(assoc % :users (lazy-seq [(get-user (:comment/author %))])))
 
 
 #_(evdb/open)
