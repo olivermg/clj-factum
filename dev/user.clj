@@ -8,10 +8,10 @@
 ;; degraded performance.
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
-(def http-handler
+#_(def http-handler
   (wrap-reload #'eventsourcing.server/http-handler))
 
-(defn run []
+#_(defn run []
   (figwheel/start-figwheel!))
 
-(def browser-repl figwheel/cljs-repl)
+#_(def browser-repl figwheel/cljs-repl)
