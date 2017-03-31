@@ -8,7 +8,7 @@
             #_[ow.factum.facts :as facts]
             [ow.factum.logic :as logic]))
 
-(defn get-entity [ldb eid]
+(defn entity [ldb eid]
   "Retrieves entire entity."
   (let [efacts (lp/with-db ldb
                  (l/run* [q]
@@ -21,7 +21,7 @@
             {:db/eid eid}
             efacts)))
 
-(defn get-entities [ldb attribute value]
+#_(defn get-entities [ldb attribute value]
   "Retrieves entire entities."
   (let [efacts (lp/with-db ldb
                  (l/run* [q]
@@ -57,10 +57,10 @@
            (print-method (select-keys v# ~sfields) w#))
 
          (defn ~getsym [~'ldb ~'eid]
-           (let [~'e (get-entity ~'ldb ~'eid)]
+           (let [~'e (entity ~'ldb ~'eid)]
              (~mapctorsym ~(transform `~'ldb `~'e))))
 
-         (defn ~getsymm [~'ldb ~'attribute ~'value]
+         #_(defn ~getsymm [~'ldb ~'attribute ~'value]
            (let [es# (get-entities ~'ldb ~'attribute ~'value)]
              (sequence (map (fn [~'e]
                               (~mapctorsym ~(transform `~'ldb `~'e))))

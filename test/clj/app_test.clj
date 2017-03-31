@@ -11,10 +11,21 @@
 (declare get-comment get-comments)
 
 (fe/defentity user [name gender birthday]
-  :transform #(assoc %2 :comments (lazy-seq (get-comments %1 :comment/author (:db/eid %2)))))
+  ;;;:transform #(assoc %2 :comments (lazy-seq (get-comments %1 :comment/author (:db/eid %2))))
+  :transform (fn [ldb user]
+               (assoc user
+                      :comments (lazy-seq
+                                 (->> (lp/with-db ldb
+                                        (ll/run* [q]
+                                          (fl/fact q :comment/author (:db/eid user) (ll/lvar))))
+                                      (into [] (map #(get-comment ldb %))))))))
 
 (fe/defentity comment [date text author]
-  :transform #(assoc %2 :users (lazy-seq [(get-user %1 (:comment/author %2))])))
+  ;;;:transform #(assoc %2 :users (lazy-seq [(get-user %1 (:comment/author %2))]))
+  :transform (fn [ldb comment]
+               (assoc comment
+                      :users (lazy-seq
+                              [(get-user ldb (:comment/author comment))]))))
 
 
 (defonce ^:dynamic *db* (fd/open))
@@ -51,14 +62,14 @@
     (is (< (count pfs) (count fs)))))
 
 
-(deftest get-entity-1
-  (let [e (fe/get-entity *ldb* 1)]
+(deftest entity-1
+  (let [e (fe/entity *ldb* 1)]
     (is (= e {:db/eid 1
               :user/name "foo1"
               :user/gender :f
               :user/birthday #inst "1999-09-09"}))))
 
-(deftest get-entities-1
+#_(deftest get-entities-1
   (let [es (fe/get-entities *ldb* :comment/author 1)
         [e1 e2] (sort-by :db/eid es)]
     (is (= (count es) 2))
@@ -86,7 +97,7 @@
     (is (every? #(= (:db/eid %) (:db/eid u)) u-cs0-us))))
 
 
-#_(fe/get-entity ldb 1)
+#_(fe/entity ldb 1)
 #_(get-user ldb 2)
 
 #_(lp/with-db ldb
