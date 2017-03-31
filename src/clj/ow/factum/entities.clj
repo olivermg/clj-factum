@@ -49,8 +49,8 @@
         getsym (-> (str "get-" name) symbol)
         getsymm (-> (str "get-" name "s") symbol)
         transform #(if transform
-                     `(~transform ~%)
-                     %)]
+                     `(~transform ~%1 ~%2)
+                     %2)]
     `(do (defrecord ~recsym [~@fields])
 
          (defmethod print-method ~recsym [v# ^java.io.Writer w#]
@@ -58,10 +58,10 @@
 
          (defn ~getsym [~'ldb ~'eid]
            (let [~'e (get-entity ~'ldb ~'eid)]
-             (~mapctorsym ~(transform `~'e))))
+             (~mapctorsym ~(transform `~'ldb `~'e))))
 
          (defn ~getsymm [~'ldb ~'attribute ~'value]
            (let [es# (get-entities ~'ldb ~'attribute ~'value)]
              (sequence (map (fn [~'e]
-                              (~mapctorsym ~(transform `~'e))))
+                              (~mapctorsym ~(transform `~'ldb `~'e))))
                        es#))))))
