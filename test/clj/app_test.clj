@@ -11,10 +11,10 @@
 (declare get-comment get-comments)
 
 (fe/defentity user [name gender birthday]
-  :transform #(assoc % :comments (lazy-seq (get-comments :comment/author (:db/eid %)))))
+  :transform #(assoc %2 :comments (lazy-seq (get-comments %1 :comment/author (:db/eid %2)))))
 
 (fe/defentity comment [date text author]
-  :transform #(assoc % :users (lazy-seq [(get-user (:comment/author %))])))
+  :transform #(assoc %2 :users (lazy-seq [(get-user %1 (:comment/author %2))])))
 
 
 (defonce ^:dynamic *db* (fd/open))
@@ -49,6 +49,41 @@
     (is (not-empty pfs))
     (is (empty? (find-duplicate-facts pfs)))
     (is (< (count pfs) (count fs)))))
+
+
+(deftest get-entity-1
+  (let [e (fe/get-entity *ldb* 1)]
+    (is (= e {:db/eid 1
+              :user/name "foo1"
+              :user/gender :f
+              :user/birthday #inst "1999-09-09"}))))
+
+(deftest get-entities-1
+  (let [es (fe/get-entities *ldb* :comment/author 1)
+        [e1 e2] (sort-by :db/eid es)]
+    (is (= (count es) 2))
+    (is (= e1 {:db/eid 3
+               :comment/author 1
+               :comment/text "comment1_1"
+               :comment/date #inst "2017-01-01"}))
+    (is (= e2 {:db/eid 4
+               :comment/author 1
+               :comment/text "comment1_2"
+               :comment/date #inst "2017-02-01"}))))
+
+
+(deftest get-user-1
+  (let [u (get-user *ldb* 1)
+        u-cs (:comments u)
+        u-cs0-us (:users (first u-cs))]
+    (is (not-empty u))
+    (is (#(instance? User %) u)) ;;; wrapped in function call, because otherwise test framework
+                                 ;;; tends to take wrong instance of User after recompiling namespace
+    (is (every? #(instance? Comment %) u-cs))
+    (is (= (count u-cs) 2))
+    (is (every? #(instance? User %) u-cs0-us))
+    (is (= (count u-cs0-us) 1))
+    (is (= (-> u-cs0-us first :db/eid) (:db/eid u)))))
 
 
 #_(fe/get-entity ldb 1)
