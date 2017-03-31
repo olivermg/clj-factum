@@ -78,12 +78,12 @@
         u-cs0-us (:users (first u-cs))]
     (is (not-empty u))
     (is (#(instance? User %) u)) ;;; wrapped in function call, because otherwise test framework
-                                 ;;; tends to take wrong instance of User after recompiling namespace
+                                 ;;; tends to take wrong instance of User after recompiling test ns
     (is (every? #(instance? Comment %) u-cs))
     (is (= (count u-cs) 2))
     (is (every? #(instance? User %) u-cs0-us))
     (is (= (count u-cs0-us) 1))
-    (is (= (-> u-cs0-us first :db/eid) (:db/eid u)))))
+    (is (every? #(= (:db/eid %) (:db/eid u)) u-cs0-us))))
 
 
 #_(fe/get-entity ldb 1)
