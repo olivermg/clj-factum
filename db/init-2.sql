@@ -67,7 +67,7 @@ insert into es_events (tx, eid, attribute, action, value) values
        (1, 1, ':user/gender',   ':add', ':m'),
        (3, 1, ':user/gender',   ':add', ':f'),
        (3, 1, ':user/name',     ':add', '"foo1"'),
-       (3, 1, ':user/birthday', ':add', '"1999-09-09"'),
+       (3, 1, ':user/birthday', ':add', '#inst "1999-09-09"'),
 
        (2, 2, ':user/name',     ':add', '"bar2"'),
        (2, 2, ':user/gender',   ':add', ':f'),
