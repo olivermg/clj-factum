@@ -10,7 +10,7 @@
                                 v #{:action :attribute :value}))))
 
 (defn get-facts [& {:keys [where-criteria]}]
-  "Retrieves all facts, potentially narrowed by specified criteria."
+  "Retrieves all raw facts, potentially narrowed by specified criteria."
   (let [query (-> (db/select* es_events)
                   (#(if where-criteria
                       (db/where % where-criteria)
