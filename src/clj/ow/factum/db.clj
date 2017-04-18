@@ -32,16 +32,19 @@ retracted later on (but before timestamp)."
 (defn add-facts [this facts]
   "Adds one or more facts within one single transaction."
   (let [txid (new-txid this)]
-    #_(->> (map #(assoc % :t txid) facts)
-           (map save-fact)
-           doall)
-    (sequence (comp (map #(assoc % :t txid :action :add))
+    (sequence (comp (map #(->> (concat % (repeat nil))
+                               (take 5)
+                               vec))
+                    (map #(assoc % 3 txid 4 :add))
                     (map #(save this %)))
               facts)))
 
 (defn retract-facts [this facts]
   "Retracts one or more facts within one single transaction."
   (let [txid (new-txid this)]
-    (sequence (comp (map #(assoc % :t txid :action :retract))
+    (sequence (comp (map #(->> (concat % (repeat nil))
+                               (take 5)
+                               vec))
+                    (map #(assoc % 3 txid 4 :retract))
                     (map #(save this %)))
               facts)))

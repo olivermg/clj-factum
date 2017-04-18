@@ -67,7 +67,7 @@
     (is (= e {:db/eid 1
               :user/name "foo1"
               :user/gender :f
-              :user/birthday #inst "1999-09-09"}))))
+              :user/birthday #inst"1999-09-09"}))))
 
 #_(deftest get-entities-1
   (let [es (fe/get-entities *ldb* :comment/author 1)
@@ -107,7 +107,7 @@
                          (ll/== q [a v]))))
                    (into {}))]
     (is (= facts {:user/name "foo1"
-                  :user/birthday #inst "1999-09-09"
+                  :user/birthday #inst"1999-09-09"
                   :user/gender :f}))))
 
 
