@@ -55,9 +55,12 @@ Rough layout:
 
 ## Ideas
 
-- Snapshots:
+- "Snapshots":
   Either really in the DB (delete obsolete facts up to a certain date) or
   provide "virtual" snapshots on App side.
+  This can exist in two variants:
+  - for MemDB, to save application memory
+  - for ExternalDB, to save disk space
 
 - MemDB (DB in memory):
   Keep just one instance of DB in App memory and operate on that.
@@ -107,19 +110,25 @@ Rough layout:
   trying to print (define `print-method`) or serialize (?) entities.
 
 
+## TODOs
+
+- Remove dependency on Postgres - make DB config/connection completely external
+  and only rely on clojure.java.jdbc .
+
+
 ## Examples
 
 ### Flow of Data
 
 ``` text
-(get-facts) [retrieves all facts]
+(get-facts) [retrieves all stored facts from database]
     |
     v
-(project-facts) [projects to relevant facts]
+(project-facts) [projects to relevant facts, i.e. ones that are obsolete because of newer facts are being removed]
     |
     v
-(get-logic-db) [makes data a fact db suitable for core.logic]
+(get-logic-db) ["converts" db facts to a set of facts suitable for core.logic]
     |
     v
-e.g. (get-entity) [applies core.logic program to data to retrieve relevant data]
+e.g. (get-entity) [applies core.logic program to a set of facts in order to retrieve desired data]
 ```
