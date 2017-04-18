@@ -5,7 +5,9 @@
             [clojure.string :as str]
             ;;;[korma.core :as db]
             ;;;[ow.factum.db :as fdb]
-            [ow.factum.facts :as facts]))
+            [ow.factum.db :as db]
+            #_[ow.factum.facts :as facts]
+            ))
 
 
 ;;;
@@ -35,8 +37,7 @@
           (get-facts)
           ))))
 
-(defn get-logic-db []
-  (->> (facts/get-facts)
-       facts/project-facts
+(defn get-logic-db [eventstore]
+  (->> (db/projected-facts eventstore #inst"1980-01-01")
        (into [] (map #(vec (cons fact %))))
        (apply lp/db)))

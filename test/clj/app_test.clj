@@ -3,7 +3,7 @@
             [clojure.core.logic :as ll]
             [clojure.core.logic.pldb :as lp]
             [ow.factum.db :as fd]
-            [ow.factum.facts :as ff]
+            [ow.factum.db.postgres :as postgres]
             [ow.factum.logic :as fl]
             [ow.factum.entities :as fe]))
 
@@ -28,8 +28,8 @@
                               [(get-user ldb (:comment/author comment))]))))
 
 
-(defonce ^:dynamic *db* (fd/open))
-(def ^:dynamic *ldb* (fl/get-logic-db))
+(defonce ^:dynamic *eventstore* (postgres/open))
+(def ^:dynamic *ldb* (fl/get-logic-db *eventstore*))
 
 
 (defn- find-duplicate-facts [fs]
@@ -48,14 +48,14 @@
   (is (not-empty *ldb*)))
 
 (deftest get-facts-1
-  (let [fs (ff/get-facts)]
+  (let [fs (fd/get-all *eventstore*)]
     (is (sequential? fs))
     (is (not-empty fs))
     (is (not-empty (find-duplicate-facts fs)))))
 
 (deftest project-facts-1
-  (let [fs (ff/get-facts )
-        pfs (ff/project-facts fs)]
+  (let [fs (fd/get-all *eventstore*)
+        pfs (fd/projected-facts *eventstore* #inst"1980-01-01")]
     (is (sequential? pfs))
     (is (not-empty pfs))
     (is (empty? (find-duplicate-facts pfs)))

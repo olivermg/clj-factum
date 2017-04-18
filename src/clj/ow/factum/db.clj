@@ -1,41 +1,47 @@
-(ns ow.factum.db
-  (:refer-clojure :rename {update update-clj
-                           == ==-clj})
-  (:require [korma.db :as db]
-            [korma.core :refer :all]
-            [heroku-database-url-to-jdbc.core :as h]
-            [environ.core :as env]
-            #_[clojure.core.logic :refer :all]
-            #_[clojure.core.logic.pldb :refer :all]
-            #_[clojure.edn :as edn]
-            #_[eventsourcing.custom :as es]))
+(ns ow.factum.db)
 
+(defprotocol Eventstore
+  (get-all [this])
+  (new-eid [this])
+  (new-txid [this])
+  (save [this fact]))
 
-;;;
-;;; GENERIC DB STUFF
-;;;
+(defn projected-facts [this timestamp]
+  "Projects raw facts to a given timestamp.
+This effectively filters those facts that are relevant for the given timestamp,
+i.e. it removes obsolete old facts that are overriden by newer ones or have been
+retracted later on (but before timestamp)."
+  (let [rawfacts (get-all this)
+        xf (fn [xf]
+             (let [facts* (volatile! {})]
+               (fn
+                 ([] (xf))
+                 ([result] (xf result))
+                 ([result [e a v t action :as input]]
+                  (case action
+                    :add (case (get-in @facts* [e a])
+                           true result
+                           ::retracted (do (vswap! facts* #(update-in % [e] dissoc a))
+                                           result)
+                           nil (do (vswap! facts* #(assoc-in % [e a] true))
+                                   (xf result (take 4 input))))
+                    :retract (do (vswap! facts* #(assoc-in % [e a] ::retracted))
+                                 result))))))]
+    (into [] xf rawfacts)))
 
-(defn open []
-  (let [url (env/env :database-url)
-        kmap (h/korma-connection-map url)
-        db (db/create-db (db/postgres kmap))]
-    (db/default-connection db)
-    db))
+(defn add-facts [this facts]
+  "Adds one or more facts within one single transaction."
+  (let [txid (new-txid this)]
+    #_(->> (map #(assoc % :t txid) facts)
+           (map save-fact)
+           doall)
+    (sequence (comp (map #(assoc % :t txid :action :add))
+                    (map #(save this %)))
+              facts)))
 
-(defn select-lazy
-  "q is a korma select object, produced via select*"
-  ([q l o xf] (when-let [res (-> (select (-> q (limit l) (offset o)))
-                                 (#(if xf
-                                     (into [] xf %)
-                                     #_(sequence xf %)
-                                     #_(transduce xf (or rf conj) %)
-                                     %))
-                                 seq)]
-                (println "did another select from" o "to" (+ o l))
-                (concat res (lazy-seq (select-lazy q l (+ o l) xf)))))
-  ([q xf] (select-lazy q 2 0 xf))
-  ([q] (select-lazy q 2 0 nil)))
-
-
-#_(open)
-#_(entity 1)
+(defn retract-facts [this facts]
+  "Retracts one or more facts within one single transaction."
+  (let [txid (new-txid this)]
+    (sequence (comp (map #(assoc % :t txid :action :retract))
+                    (map #(save this %)))
+              facts)))
