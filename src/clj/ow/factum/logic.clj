@@ -3,10 +3,7 @@
             [clojure.core.logic.pldb :as lp]
             [clojure.core.logic.fd :as lfd]
             [clojure.string :as str]
-            ;;;[korma.core :as db]
-            ;;;[ow.factum.db :as fdb]
             [ow.factum.db :as db]
-            #_[ow.factum.facts :as facts]
             ))
 
 

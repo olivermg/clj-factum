@@ -3,9 +3,6 @@
             [clojure.core.logic.pldb :as lp]
             [clojure.core.logic.fd :as lfd]
             [clojure.string :as str]
-            ;;;[korma.core :as db]
-            ;;;[ow.factum.db :as fdb]
-            #_[ow.factum.facts :as facts]
             [ow.factum.logic :as logic]))
 
 (defn entity [ldb eid]
