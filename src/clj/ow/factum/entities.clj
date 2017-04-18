@@ -15,8 +15,9 @@
                    (l/fresh [e a v]
                      (logic/fact e a v (l/lvar))
                      (l/== e eid)
-                     (l/== q [e a v (l/lvar)]))))]
-    (reduce (fn [s [e a v t]]
+                     (l/== q [a v]))))]
+    (into {:db/eid eid} efacts)
+    #_(reduce (fn [s [e a v t]]
               (assoc s a v))
             {:db/eid eid}
             efacts)))
