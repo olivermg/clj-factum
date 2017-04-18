@@ -99,16 +99,6 @@
 
 
 (deftest get-custom-1
-  (let [facts (lp/with-db *ldb*
-                (ll/run* [q]
-                  (ll/fresh [e a v]
-                    (fl/fact e a v (ll/lvar))
-                    (ll/== e 1)
-                    (ll/== q a))))]
-    (println facts)
-    (is (set facts) #{:user/name :user/birthday :user/gender})))
-
-(deftest get-custom-2
   (let [facts (->> (lp/with-db *ldb*
                      (ll/run* [q]
                        (ll/fresh [e a v]
