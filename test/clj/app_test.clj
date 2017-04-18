@@ -90,11 +90,35 @@
     (is (not-empty u))
     (is (#(instance? User %) u)) ;;; wrapped in function call, because otherwise test framework
                                  ;;; tends to take wrong instance of User after recompiling test ns
+    (is (= (:db/eid u) 1))
     (is (every? #(instance? Comment %) u-cs))
     (is (= (count u-cs) 2))
     (is (every? #(instance? User %) u-cs0-us))
     (is (= (count u-cs0-us) 1))
     (is (every? #(= (:db/eid %) (:db/eid u)) u-cs0-us))))
+
+
+(deftest get-custom-1
+  (let [facts (lp/with-db *ldb*
+                (ll/run* [q]
+                  (ll/fresh [e a v]
+                    (fl/fact e a v (ll/lvar))
+                    (ll/== e 1)
+                    (ll/== q a))))]
+    (println facts)
+    (is (set facts) #{:user/name :user/birthday :user/gender})))
+
+(deftest get-custom-2
+  (let [facts (->> (lp/with-db *ldb*
+                     (ll/run* [q]
+                       (ll/fresh [e a v]
+                         (fl/fact e a v (ll/lvar))
+                         (ll/== e 1)
+                         (ll/== q [a v]))))
+                   (into {}))]
+    (is (= facts {:user/name "foo1"
+                  :user/birthday #inst "1999-09-09"
+                  :user/gender :f}))))
 
 
 #_(fe/entity ldb 1)
