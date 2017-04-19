@@ -21,7 +21,8 @@ is being assumed."
                                            result)
                            nil (do (vswap! facts* #(assoc-in % [e a] true))
                                    (xf result (take 4 input))))
-                    :retract (do (vswap! facts* #(assoc-in % [e a] ::retracted))
+                    :retract (do (when (nil? (get-in @facts* [e a]))
+                                   (vswap! facts* #(assoc-in % [e a] ::retracted)))
                                  result))))))]
     (into [] xf rawfacts)))
 
