@@ -4,7 +4,6 @@
             [korma.core :refer :all]
             [clojure.edn :as edn]
             [heroku-database-url-to-jdbc.core :as h]
-            [environ.core :as env]
             [ow.factum.db :as d]))
 
 (defn- select-lazy
@@ -57,13 +56,17 @@
                        (values dbfact))]
       [(:eid data) (:attribute data) (:value data) (:tx data)])))
 
+(defn new-eventstore [db]
+  (->Eventstore db))
 
-(defn open []
-  (let [url (env/env :database-url)
-        kmap (h/korma-connection-map url)
+(defn get-db [eventstore]
+  (:db eventstore))
+
+(defn open [url]
+  (let [kmap (h/korma-connection-map url)
         db (db/create-db (db/postgres kmap))]
     (db/default-connection db)
-    (->Eventstore db)))
+    (new-eventstore db)))
 
 
 #_(open)

@@ -13,11 +13,7 @@
                      (logic/fact e a v (l/lvar))
                      (l/== e eid)
                      (l/== q [a v]))))]
-    (into {:db/eid eid} efacts)
-    #_(reduce (fn [s [e a v t]]
-              (assoc s a v))
-            {:db/eid eid}
-            efacts)))
+    (into {:db/eid eid} efacts)))
 
 #_(defn get-entities [ldb attribute value]
   "Retrieves entire entities."

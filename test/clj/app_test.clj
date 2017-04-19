@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [clojure.core.logic :as ll]
             [clojure.core.logic.pldb :as lp]
+            [environ.core :as env]
             [ow.factum.db :as fd]
             [ow.factum.db.postgres :as postgres]
             [ow.factum.logic :as fl]
@@ -28,7 +29,7 @@
                               [(get-user ldb (:comment/author comment))]))))
 
 
-(defonce ^:dynamic *eventstore* (postgres/open))
+(defonce ^:dynamic *eventstore* (postgres/open (env/env :database-url)))
 (def ^:dynamic *ldb* (fl/get-logic-db *eventstore*))
 
 
