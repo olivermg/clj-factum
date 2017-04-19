@@ -34,7 +34,7 @@
          (map (fn [[k v]]
                 (assoc v :db/eid k))))))
 
-(defmacro defentity [name [& fields] & {:keys [transform]}]
+#_(defmacro defentity [name [& fields] & {:keys [transform]}]
   (let [name (clojure.core/name name)
         recsym (-> name str/capitalize symbol)
         mapctorsym (-> (str "map->" (str/capitalize name)) symbol)
@@ -42,7 +42,7 @@
                                 (map #(keyword name %)))
                       fields)
         getsym (-> (str "get-" name) symbol)
-        getsymm (-> (str "get-" name "s") symbol)
+        ;;;getsymm (-> (str "get-" name "s") symbol)
         transform #(if transform
                      `(~transform ~%1 ~%2)
                      %2)]
@@ -52,7 +52,7 @@
            (print-method (select-keys v# ~sfields) w#))
 
          (defn ~getsym [~'ldb ~'eid]
-           (let [~'e (entity ~'ldb ~'eid)]
+           (when-let [~'e (entity ~'ldb ~'eid)]
              (~mapctorsym ~(transform `~'ldb `~'e))))
 
          #_(defn ~getsymm [~'ldb ~'attribute ~'value]

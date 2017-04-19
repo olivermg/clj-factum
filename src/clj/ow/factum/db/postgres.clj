@@ -17,8 +17,8 @@
                                  seq)]
                 (println "did another select from" o "to" (+ o l))
                 (concat res (lazy-seq (select-lazy q l (+ o l) xf)))))
-  ([q xf] (select-lazy q 2 0 xf))
-  ([q] (select-lazy q 2 0 nil)))
+  ([q xf] (select-lazy q 10 0 xf))
+  ([q] (select-lazy q 10 0 nil)))
 
 (defentity es_events
   (prepare (fn [v] (reduce #(clojure.core/update %1 %2 pr-str)
