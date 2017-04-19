@@ -6,8 +6,14 @@
             [ow.factum.logic :as l]
             [ow.factum.entities :as e]))
 
-(defrecord FactEngine [eventstore])
+(defrecord FactEngine [externaldb memdb])
 
 (defn ldb [this & {:keys [timestamp]}]
-  (l/get-logic-db (:eventstore this)
+  (l/get-logic-db (:externaldb this)
                   :timestamp timestamp))
+
+(defn start-polling [this & {:keys [interval]}]
+  )
+
+(defn stop-polling [this]
+  )
