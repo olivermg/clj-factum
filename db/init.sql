@@ -27,7 +27,7 @@ create table es_events (
 
        primary key (id)
 );
-create index on es_events (tx desc);
+create index on es_events (tx desc, id desc);
 
 create sequence es_events_txid;
 create sequence es_events_eid;

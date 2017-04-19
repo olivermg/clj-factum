@@ -32,7 +32,8 @@
 
   (get-all [this]
     (select-lazy (-> (select* es_events)
-                     (order :tx :desc))
+                     (order :tx :desc)
+                     (order :id :desc))
                  (map (fn [{:keys [eid attribute value tx action]}]
                         [eid attribute value tx action]))))
 
