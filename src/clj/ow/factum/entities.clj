@@ -3,27 +3,28 @@
             [clojure.core.logic.pldb :as lp]
             [clojure.core.logic.fd :as lfd]
             [clojure.string :as str]
-            [ow.factum.logic :as logic]))
+            [ow.factum.logic :as fl]))
 
 (defn entity [ldb eid]
   "Retrieves entire entity."
   (let [efacts (lp/with-db ldb
                  (l/run* [q]
                    (l/fresh [e a v]
-                     (logic/fact e a v (l/lvar))
+                     (fl/fact e a v (l/lvar))
                      (l/== e eid)
                      (l/== q [a v]))))]
-    (into {:db/eid eid} efacts)))
+    (when (not-empty efacts)
+      (into {:db/eid eid} efacts))))
 
 #_(defn get-entities [ldb attribute value]
   "Retrieves entire entities."
   (let [efacts (lp/with-db ldb
                  (l/run* [q]
                    (l/fresh [e a v e2 a2 v2]
-                     (logic/fact e a v (l/lvar))
+                     (fl/fact e a v (l/lvar))
                      (l/== a attribute)
                      (l/== v value)
-                     (logic/fact e2 a2 v2 (l/lvar))
+                     (fl/fact e2 a2 v2 (l/lvar))
                      (l/== e2 e)
                      (l/== q [e2 a2 v2 (l/lvar)]))))]
     (->> (reduce (fn [s [e a v t]]

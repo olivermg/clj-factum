@@ -5,6 +5,7 @@
             [environ.core :as env]
             [ow.factum.db :as fd]
             [ow.factum.db.postgres :as postgres]
+            [ow.factum.facts :as ff]
             [ow.factum.logic :as fl]
             [ow.factum.entities :as fe]))
 
@@ -56,7 +57,7 @@
 
 (deftest project-facts-1
   (let [fs (fd/get-all *eventstore*)
-        pfs (fd/projected-facts *eventstore* #inst"1980-01-01")]
+        pfs (ff/projected-facts *eventstore* :timestamp #inst"1980-01-01")]
     (is (sequential? pfs))
     (is (not-empty pfs))
     (is (empty? (find-duplicate-facts pfs)))
