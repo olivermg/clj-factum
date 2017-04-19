@@ -34,13 +34,14 @@
          (map (fn [[k v]]
                 (assoc v :db/eid k))))))
 
-#_(defmacro defentity [name [& fields] & {:keys [transform]}]
+(defmacro defentity [name [& fields] & {:keys [transform]}]
   (let [name (clojure.core/name name)
         recsym (-> name str/capitalize symbol)
         mapctorsym (-> (str "map->" (str/capitalize name)) symbol)
-        sfields (into #{} (comp (map clojure.core/name)
+        printfields (into #{:db/eid}
+                          (comp (map clojure.core/name)
                                 (map #(keyword name %)))
-                      fields)
+                          fields)
         getsym (-> (str "get-" name) symbol)
         ;;;getsymm (-> (str "get-" name "s") symbol)
         transform #(if transform
@@ -49,7 +50,7 @@
     `(do (defrecord ~recsym [~@fields])
 
          (defmethod print-method ~recsym [v# ^java.io.Writer w#]
-           (print-method (select-keys v# ~sfields) w#))
+           (print-method (select-keys v# ~printfields) w#))
 
          (defn ~getsym [~'ldb ~'eid]
            (when-let [~'e (entity ~'ldb ~'eid)]

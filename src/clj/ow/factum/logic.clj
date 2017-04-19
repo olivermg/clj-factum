@@ -32,3 +32,11 @@
   (->> (f/projected-facts eventstore :timestamp timestamp)
        (into [] (map #(vec (cons fact %))))
        (apply lp/db)))
+
+#_(defmacro query [ldb & body]
+  `(lp/with-db ~ldb
+     ~@body))
+
+#_(defmacro query1 [ldb & body]
+  `(-> (query ~ldb ~@body)
+       first))
