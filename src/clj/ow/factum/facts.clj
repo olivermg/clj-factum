@@ -1,14 +1,13 @@
 (ns ow.factum.facts
   (:require [ow.factum.db :as db]))
 
-(defn projected-facts [eventstore & {:keys [timestamp]}]
-  "Projects raw facts to a given timestamp.
+(defn projected-facts [rawfacts & {:keys [timestamp]}]
+  "Projects rawfacts to a given timestamp.
 This effectively filters those facts that are relevant for the given timestamp,
 i.e. it removes obsolete old facts that are overriden by newer ones or have been
 retracted later on (but before timestamp). If no timestamp is given, current time
 is being assumed."
-  (let [rawfacts (db/get-all eventstore)
-        xf (fn [xf]
+  (let [xf (fn [xf]
              (let [facts* (volatile! {})]
                (fn
                  ([] (xf))

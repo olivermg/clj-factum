@@ -3,7 +3,8 @@
             [clojure.core.logic.pldb :as lp]
             [clojure.core.logic.fd :as lfd]
             [clojure.string :as str]
-            [ow.factum.facts :as f]))
+            [ow.factum.facts :as f]
+            [ow.factum.memdb :as m]))
 
 (lp/db-rel fact e a v t)
 
@@ -28,8 +29,8 @@
           (get-facts)
           ))))
 
-(defn get-logic-db [eventstore & {:keys [timestamp]}]
-  (->> (f/projected-facts eventstore :timestamp timestamp)
+(defn get-logic-db [memdb & {:keys [timestamp]}]
+  (->> (f/projected-facts (m/get-data memdb) :timestamp timestamp)
        (into [] (map #(vec (cons fact %))))
        (apply lp/db)))
 
