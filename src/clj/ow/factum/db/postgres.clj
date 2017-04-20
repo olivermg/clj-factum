@@ -26,7 +26,7 @@
   (transform (fn [v] (reduce #(clojure.core/update %1 %2 edn/read-string)
                              v #{:action :attribute :value}))))
 
-(defrecord Eventstore [db]
+(defrecord Eventstore [conn]
 
   d/Eventstore
 
@@ -57,17 +57,17 @@
                        (values dbfact))]
       [(:eid data) (:attribute data) (:value data) (:tx data)])))
 
-(defn new-eventstore [db]
-  (->Eventstore db))
+(defn new-eventstore [conn]
+  (->Eventstore conn))
 
-(defn get-db [eventstore]
-  (:db eventstore))
+(defn get-conn [eventstore]
+  (:conn eventstore))
 
 (defn open [url]
   (let [kmap (h/korma-connection-map url)
-        db (db/create-db (db/postgres kmap))]
-    (db/default-connection db)
-    (new-eventstore db)))
+        conn (db/create-db (db/postgres kmap))]
+    (db/default-connection conn)
+    (new-eventstore conn)))
 
 
 #_(open)
