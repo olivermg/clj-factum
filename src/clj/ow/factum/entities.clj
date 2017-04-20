@@ -3,10 +3,12 @@
             [clojure.core.logic.pldb :as lp]
             [clojure.core.logic.fd :as lfd]
             [clojure.string :as str]
+            [clojure.set :refer [union]]
             [ow.factum.logic :as fl]))
 
 (defn entity [ldb eid]
-  "Retrieves entire entity."
+  "Retrieves an entity with all its attributes and values
+without altering those."
   (let [efacts (lp/with-db ldb
                  (l/run* [q]
                    (l/fresh [e a v]
@@ -15,6 +17,15 @@
                      (l/== q [a v]))))]
     (when (not-empty efacts)
       (into {:db/eid eid} efacts))))
+
+#_(defn entity [ldb eid]
+  "Retrieves an entity with all its attributes and values.
+Note that the underlying fact's namespaced attributes are
+converted to non-namespaced attributes during this process."
+  (let [e (entity* ldb eid)
+        xf (map (fn [[nkw v]]
+                  [(-> nkw name keyword) v]))]
+    (into {} xf e)))
 
 #_(defn get-entities [ldb attribute value]
   "Retrieves entire entities."
@@ -38,10 +49,9 @@
   (let [name (clojure.core/name name)
         recsym (-> name str/capitalize symbol)
         mapctorsym (-> (str "map->" (str/capitalize name)) symbol)
-        printfields (into #{:db/eid}
-                          (comp (map clojure.core/name)
-                                (map #(keyword name %)))
-                          fields)
+        printfields (transduce (comp (map clojure.core/name)
+                                     (map (fn [n] #{(keyword n) (keyword name n)})))
+                               union #{:eid :db/eid} fields)
         getsym (-> (str "get-" name) symbol)
         ;;;getsymm (-> (str "get-" name "s") symbol)
         transform #(if transform
