@@ -5,7 +5,7 @@
 
   d/Eventstore
 
-  (get-all [this]
+  (get-events [this since-tx]
     (->> @facts
          (sort-by #(nth % 3))
          reverse))

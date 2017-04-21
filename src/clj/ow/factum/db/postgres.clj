@@ -30,8 +30,9 @@
 
   d/Eventstore
 
-  (get-all [this]
+  (get-events [this since-tx]
     (select-lazy (-> (select* es_events)
+                     (where (>= :tx since-tx))
                      (order :tx :desc)
                      (order :id :desc))
                  (map (fn [{:keys [eid attribute value tx action]}]

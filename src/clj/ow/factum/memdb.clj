@@ -18,7 +18,11 @@
                         :or {interval 3000}}]
   (go-loop [[_ ch] []]
     (when (not= ch ctrlch)
-      (reset! data (db/get-all eventstore))
+      (swap! data #(let [[_ _ _ last-tx _] (first %)
+                         next-tx (inc (or last-tx -1))]
+                     (println "will query for tx >=" next-tx)
+                     (let [newdata (db/get-events eventstore next-tx)]
+                       (concat newdata %))))
       (recur (alts! [(timeout interval) ctrlch])))))
 
 (defn stop-polling [this]
