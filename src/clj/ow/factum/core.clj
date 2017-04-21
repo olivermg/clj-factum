@@ -1,10 +1,22 @@
-(ns ow.factum.logic
+(ns ow.factum.core
   (:require [clojure.core.logic :as l]
             [clojure.core.logic.pldb :as lp]
             [clojure.core.logic.fd :as lfd]
             [clojure.string :as str]
             [ow.factum.facts :as f]
             [ow.factum.memdb :as m]))
+
+(defrecord FactDb [memdb])
+
+(defn new-factdb [backend]
+  (->FactDb (m/new-memdb backend)))
+
+(defn start-polling [this & {:keys [interval]}]
+  (m/start-polling (:memdb this) :interval interval))
+
+(defn stop-polling [this]
+  (m/stop-polling (:memdb this)))
+
 
 (lp/db-rel fact e a v t)
 
@@ -29,10 +41,11 @@
           (get-facts)
           ))))
 
-(defn get-logic-db [memdb & {:keys [timestamp]}]
-  (->> (f/project-facts (m/get-data memdb) :timestamp timestamp)
-       (into [] (map #(vec (cons fact %))))
-       (apply lp/db)))
+(defn get-logic-db [this & {:keys [timestamp]}]
+  (let [rawdata (m/get-data (:memdb this))]
+    (->> (f/project-facts rawdata :timestamp timestamp)
+         (into [] (map #(vec (cons fact %))))
+         (apply lp/db))))
 
 #_(defmacro query [ldb & body]
   `(lp/with-db ~ldb
