@@ -1,11 +1,11 @@
-(ns ow.factum.db.memory
-  (:require [ow.factum.db :as d]))
+(ns ow.factum.backend.memory
+  (:require [ow.factum.backend :as b]))
 
-(defrecord Eventstore [facts cureid curtxid]
+(defrecord MemoryBackend [facts cureid curtxid]
 
-  d/Eventstore
+  b/Backend
 
-  (get-events [this since-tx]
+  (get-items [this since-tx]
     (->> @facts
          (sort-by #(nth % 3))
          reverse))
@@ -17,18 +17,18 @@
     (swap! curtxid inc))
 
   (save [this [e a v t action :as fact]]
-    (let [ifact [(or e (d/new-eid this))
+    (let [ifact [(or e (b/new-eid this))
                  a v
-                 (or t (d/new-txid this))]]
+                 (or t (b/new-txid this))]]
       (swap! facts #(conj % (conj ifact (or action :add))))
       ifact)))
 
-(defn new-eventstore []
-  (->Eventstore (atom '()) (atom -1) (atom -1)))
+(defn new-memorybackend []
+  (->MemoryBackend (atom '()) (atom -1) (atom -1)))
 
 
 
-(comment (def es (new-eventstore))
+(comment (def es (new-memorybackend))
 
          (d/add-facts es [[1 :name "walter1"] [1 :birthday #inst"1980-01-01"]])
 

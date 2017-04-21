@@ -1,6 +1,6 @@
 (ns ow.factum.memdb
   (:require [clojure.core.async :refer [go go-loop alts! close! timeout chan]]
-            [ow.factum.db :as db]))
+            [ow.factum.backend :as b]))
 
 (defrecord MemDb [eventstore data ctrlch])
 
@@ -21,7 +21,7 @@
       (swap! data #(let [[_ _ _ last-tx _] (first %)
                          next-tx (inc (or last-tx -1))]
                      (println "will query for tx >=" next-tx)
-                     (let [newdata (db/get-events eventstore next-tx)]
+                     (let [newdata (b/get-items eventstore next-tx)]
                        (concat newdata %))))
       (recur (alts! [(timeout interval) ctrlch])))))
 

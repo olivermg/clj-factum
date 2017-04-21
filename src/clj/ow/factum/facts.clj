@@ -1,7 +1,8 @@
 (ns ow.factum.facts
-  (:require [ow.factum.db :as db]))
+  (:require [ow.factum.memdb :as m]
+            [ow.factum.backend :as b]))
 
-(defn projected-facts [rawfacts & {:keys [timestamp]}]
+(defn project-facts [rawfacts & {:keys [timestamp]}]
   "Projects rawfacts to a given timestamp.
 This effectively filters those facts that are relevant for the given timestamp,
 i.e. it removes obsolete old facts that are overriden by newer ones or have been
@@ -25,22 +26,23 @@ is being assumed."
                                  result))))))]
     (into [] xf rawfacts)))
 
-(defn add-facts [eventstore facts]
+(defn add-facts [backend facts]
   "Adds one or more facts within one single transaction."
-  (let [txid (db/new-txid eventstore)]
-    (sequence (comp (map #(->> (concat % (repeat nil))
-                               (take 5)
-                               vec))
-                    (map #(assoc % 3 txid 4 :add))
-                    (map #(db/save eventstore %)))
-              facts)))
+  (let [txid (b/new-txid backend)]
+    (->> (sequence (comp (map #(->> (concat % (repeat nil))
+                                    (take 5)
+                                    vec))
+                         (map #(assoc % 3 txid 4 :add)))
+                   facts)
+         (b/save backend))))
 
-(defn retract-facts [eventstore facts]
+(defn retract-facts [backend facts]
   "Retracts one or more facts within one single transaction."
-  (let [txid (db/new-txid eventstore)]
-    (sequence (comp (map #(->> (concat % (repeat nil))
-                               (take 5)
-                               vec))
-                    (map #(assoc % 3 txid 4 :retract))
-                    (map #(db/save eventstore %)))
-              facts)))
+  (let [txid (b/new-txid backend)]
+    (->> (sequence (comp (map #(->> (concat % (repeat nil))
+                                    (take 5)
+                                    vec))
+                         (map #(assoc % 3 txid 4 :retract))
+                         (map #(b/save backend %)))
+                   facts)
+         (b/save backend))))

@@ -30,7 +30,7 @@
           ))))
 
 (defn get-logic-db [memdb & {:keys [timestamp]}]
-  (->> (f/projected-facts (m/get-data memdb) :timestamp timestamp)
+  (->> (f/project-facts (m/get-data memdb) :timestamp timestamp)
        (into [] (map #(vec (cons fact %))))
        (apply lp/db)))
 
