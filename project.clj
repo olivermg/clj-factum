@@ -24,6 +24,7 @@
                  [heroku-database-url-to-jdbc "0.2.2"]                 ;; convert heroku db url to korma compatible config map
 
                  [org.clojure/core.logic "0.8.11"]
+                 [aleph "0.4.3"]
                  ]
 
   :plugins [#_[lein-cljsbuild "1.1.3"]
@@ -40,7 +41,7 @@
   :uberjar-name "clj-factum.jar"
 
   ;; Use `lein run` if you just want to start a HTTP server, without figwheel
-  ;;;:main eventsourcing.server
+  :main ow.factum.server
 
   ;; nREPL by default starts in the :main namespace, we want to start in `user`
   ;; because that's where our development helper functions like (run) and
