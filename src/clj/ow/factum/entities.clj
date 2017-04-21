@@ -4,7 +4,7 @@
             [clojure.core.logic.fd :as lfd]
             [clojure.string :as str]
             [clojure.set :refer [union]]
-            [ow.factum.logic :as fl]))
+            [ow.factum.logicdb :as fl]))
 
 (defn entity [ldb eid]
   "Retrieves an entity with all its attributes and values
