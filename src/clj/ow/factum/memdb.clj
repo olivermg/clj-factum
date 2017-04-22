@@ -23,3 +23,25 @@
 
 (defn stop-polling [this]
   (close! (:ctrlch this)))
+
+(defn add-facts [this facts]
+  "Adds one or more facts within one single transaction."
+  ;;; TODO: inject facts into memdb
+  (let [txid (b/new-txid this)]
+    (->> (sequence (comp (map #(->> (concat % (repeat nil))
+                                    (take 5)
+                                    vec))
+                         (map #(assoc % 3 txid 4 :add)))
+                   facts)
+         (b/save this))))
+
+(defn retract-facts [this facts]
+  "Retracts one or more facts within one single transaction."
+  ;;; TODO: inject facts into memdb
+  (let [txid (b/new-txid this)]
+    (->> (sequence (comp (map #(->> (concat % (repeat nil))
+                                    (take 5)
+                                    vec))
+                         (map #(assoc % 3 txid 4 :retract)))
+                   facts)
+         (b/save this))))
