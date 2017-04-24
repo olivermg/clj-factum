@@ -2,10 +2,13 @@
   (:require [clojure.core.async :refer [go go-loop alts! close! timeout chan]]
             [ow.factum.backend :as b]))
 
-(defrecord MemDb [backend data ctrlch])
+;;;(defrecord MemDb [backend data ctrlch])
 
 (defn new-memdb [backend]
-  (->MemDb backend (atom []) (chan)))
+  ;;;(->MemDb backend (atom []) (chan))
+  {:backend backend
+   :data (atom [])
+   :ctrlch (chan)})
 
 (defn get-data [this]
   @(:data this))
