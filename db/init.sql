@@ -13,23 +13,25 @@ set client_encoding = 'UTF8';
 
 /*drop function if exists es_events_add(bigint, varchar(255), varchar(20), text);*/
 drop sequence if exists es_events_eid;
-drop sequence if exists es_events_txid;
+drop sequence if exists es_events_tid;
 drop table if exists es_events;
 
 
 create table es_events (
        id bigserial not null,
-       tx bigint not null,
-       eid bigint not null,
-       attribute varchar(255) not null,
+       e bigint not null,
+       a varchar(255) not null,
+       v text not null,
+       t bigint not null,
        action varchar(20) not null default ':add',
-       value text not null,
+       time timestamp with time zone default now(),
 
        primary key (id)
 );
-create index on es_events (tx desc, id desc);
+create index on es_events (t desc, id desc);
+create index on es_events (time desc, id desc);
 
-create sequence es_events_txid;
+create sequence es_events_tid;
 create sequence es_events_eid;
 
 /*
@@ -62,7 +64,7 @@ select es_events_add(2, ':user/gender',   ':add', ':f');
 select es_events_add(2, ':user/name',     ':add', '"bar1"');
 */
 
-insert into es_events (tx, eid, attribute, action, value) values
+insert into es_events (t, e, a, action, v) values
        (1, 1, ':user/name',     ':add', '"foo2"'),
        (1, 1, ':user/gender',   ':add', ':m'),
        (3, 1, ':user/gender',   ':add', ':f'),

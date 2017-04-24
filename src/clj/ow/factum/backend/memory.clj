@@ -1,11 +1,11 @@
 (ns ow.factum.backend.memory
   (:require [ow.factum.backend :as b]))
 
-(defrecord MemoryBackend [facts cureid curtxid]
+(defrecord MemoryBackend [facts cureid curtid]
 
   b/Backend
 
-  (get-items [this since-tx]
+  (get-items [this since-tid]
     (->> @facts
          (sort-by #(nth % 3))
          reverse))
@@ -13,13 +13,13 @@
   (new-eid [this]
     (swap! cureid inc))
 
-  (new-txid [this]
-    (swap! curtxid inc))
+  (new-tid [this]
+    (swap! curtid inc))
 
   (save [this [e a v t action :as fact]]
     (let [ifact [(or e (b/new-eid this))
                  a v
-                 (or t (b/new-txid this))]]
+                 (or t (b/new-tid this))]]
       (swap! facts #(conj % (conj ifact (or action :add))))
       ifact)))
 

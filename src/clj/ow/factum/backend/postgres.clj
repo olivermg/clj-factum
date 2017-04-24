@@ -23,46 +23,46 @@
 
 (defentity es_events
   (prepare (fn [v] (reduce #(clojure.core/update %1 %2 pr-str)
-                           v #{:action :attribute :value})))
+                           v #{:action :a :v})))
   (transform (fn [v] (reduce #(clojure.core/update %1 %2 edn/read-string)
-                             v #{:action :attribute :value}))))
+                             v #{:action :a :v}))))
 
 (defn- save-fact [this t [e a v _ action :as fact]]
-  (let [dbfact {:eid (or e (b/new-eid this))
-                :attribute a
-                :value v
-                :tx (or t (b/new-txid this))
+  (let [dbfact {:e (or e (b/new-eid this))
+                :a a
+                :v v
+                :t (or t (b/new-tid this))
                 :action (or action :add)}
         data (insert es_events
                      (values dbfact))]
-    [(:eid data) (:attribute data) (:value data) (:tx data)]))
+    [(:e data) (:a data) (:v data) (:t data)]))
 
 (defrecord PostgresBackend [conn]
 
   b/Backend
 
-  (get-items [this since-tx]
+  (get-items [this since-tid]
     (select-lazy (-> (select* es_events)
-                     (where (>= :tx since-tx))
-                     (order :tx :desc)
+                     (where (>= :t since-tid))
+                     (order :t :desc)
                      (order :id :desc))
-                 (map (fn [{:keys [eid attribute value tx action]}]
-                        [eid attribute value tx action]))))
+                 (map (fn [{:keys [e a v t action]}]
+                        [e a v t action]))))
 
   (new-eid [this]
     (-> (select (sqlfn nextval "es_events_eid"))
         first
         :nextval))
 
-  (new-txid [this]
-    (-> (select (sqlfn nextval "es_events_txid"))
+  (new-tid [this]
+    (-> (select (sqlfn nextval "es_events_tid"))
         first
         :nextval))
 
   (save [this facts]
     (db/transaction
-     (let [txid (b/new-txid this)]
-       (doall (map #(save-fact this txid %) facts))))))
+     (let [tid (b/new-tid this)]
+       (doall (map #(save-fact this tid %) facts))))))
 
 (defn new-postgresbackend [conn]
   (->PostgresBackend conn))

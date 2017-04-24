@@ -17,10 +17,10 @@
                      & {:keys [interval]}]
   (go-loop [[_ ch] []]
     (when (not= ch ctrlch)
-      (swap! data #(let [[_ _ _ last-tx _] (first %)
-                         next-tx (inc (or last-tx -1))]
-                     (println "will query for tx >=" next-tx)
-                     (let [newdata (b/get-items backend next-tx)]
+      (swap! data #(let [[_ _ _ last-tid _] (first %)
+                         next-tid (inc (or last-tid -1))]
+                     (println "will query for tid >=" next-tid)
+                     (let [newdata (b/get-items backend next-tid)]
                        (concat newdata %))))
       (recur (alts! [(timeout (or interval 3000)) ctrlch])))))
 
@@ -30,21 +30,21 @@
 (defn add-facts [this facts]
   "Adds one or more facts within one single transaction."
   ;;; TODO: inject facts into memdb
-  (let [txid (b/new-txid this)]
+  (let [tid (b/new-tid this)]
     (->> (sequence (comp (map #(->> (concat % (repeat nil))
                                     (take 5)
                                     vec))
-                         (map #(assoc % 3 txid 4 :add)))
+                         (map #(assoc % 3 tid 4 :add)))
                    facts)
          (b/save this))))
 
 (defn retract-facts [this facts]
   "Retracts one or more facts within one single transaction."
   ;;; TODO: inject facts into memdb
-  (let [txid (b/new-txid this)]
+  (let [tid (b/new-tid this)]
     (->> (sequence (comp (map #(->> (concat % (repeat nil))
                                     (take 5)
                                     vec))
-                         (map #(assoc % 3 txid 4 :retract)))
+                         (map #(assoc % 3 tid 4 :retract)))
                    facts)
          (b/save this))))
