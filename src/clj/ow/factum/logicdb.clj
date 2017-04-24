@@ -15,7 +15,7 @@
   ([memdb] (new-logicdb memdb nil)))
 
 (defn- project-facts [this]
-  "Projects rawfacts to a given timestamp.
+  "Projects rawfacts to the timestamp specified in this logicdb.
 This effectively filters those facts that are relevant for the given timestamp,
 i.e. it removes obsolete old facts that are overriden by newer ones or have been
 retracted later on (but before timestamp). If no timestamp is given, current time
