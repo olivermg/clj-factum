@@ -8,9 +8,13 @@
 
                  [clj-factum "0.1.0-SNAPSHOT"]
 
+                 ;;;[environ "1.1.0"]
+
                  ;;; tcp server:
                  [aleph "0.4.3"]
                  ]
+
+  ;;;:plugins [[lein-environ "1.1.0"]]
 
   :min-lein-version "2.6.1"
 

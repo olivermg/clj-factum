@@ -10,6 +10,7 @@
 /out/
 /resources/public/js/compiled/**
 /target/
+/config.edn
 figwheel_server.log
 pom.xml
 pom.xml.asc
