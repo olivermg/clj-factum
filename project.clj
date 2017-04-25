@@ -1,26 +1,15 @@
 (defproject clj-factum "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
+  :description "eventsourcing library"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/core.async "0.3.442"]
-                 ;;;[org.clojure/clojurescript "1.9.89" :scope "provided"]
-                 ;;;[com.cognitect/transit-clj "0.8.285"]
-                 ;;;[ring "1.4.0"]
-                 ;;;[ring/ring-defaults "0.2.1"]
-                 ;;;[bk/ring-gzip "0.1.1"]
-                 ;;;[ring.middleware.logger "0.5.0"]
-                 ;;;[compojure "1.5.0"]
-                 ;;;[environ "1.0.3"]
-                 ;;;[org.omcljs/om "1.0.0-alpha36"]
-
                  [org.clojure/core.logic "0.8.11"]
-                 [aleph "0.4.3"]
                  ]
 
-  :plugins [#_[lein-cljsbuild "1.1.3"]
+  #_:plugins #_[#_[lein-cljsbuild "1.1.3"]
             [lein-environ "1.0.3"]]
 
   :min-lein-version "2.6.1"
@@ -29,17 +18,17 @@
 
   :test-paths ["test/clj" #_"test/cljc"]
 
-  :clean-targets ^{:protect false} [:target-path :compile-path #_"resources/public/js"]
+  ;;;:clean-targets ^{:protect false} [:target-path :compile-path #_"resources/public/js"]
 
-  :uberjar-name "clj-factum.jar"
+  ;;;:uberjar-name "clj-factum.jar"
 
   ;; Use `lein run` if you just want to start a HTTP server, without figwheel
-  :main ow.factum.server
+  ;;;:main ^:skip-aot ow.factum.server
 
   ;; nREPL by default starts in the :main namespace, we want to start in `user`
   ;; because that's where our development helper functions like (run) and
   ;; (browser-repl) live.
-  :repl-options {:init-ns user}
+  ;;;:repl-options {:init-ns user}
 
   #_:cljsbuild #_{:builds
               [{:id "app"
@@ -107,7 +96,7 @@
 
   ;;;:doo {:build "test"}
 
-  :profiles {:dev
+  #_:profiles #_{:dev
              {:dependencies [#_[figwheel "0.5.4-4"]
                              #_[figwheel-sidecar "0.5.4-4"]
                              #_[com.cemerick/piggieback "0.2.1"]
