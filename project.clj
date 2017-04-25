@@ -13,15 +13,8 @@
                  ;;;[bk/ring-gzip "0.1.1"]
                  ;;;[ring.middleware.logger "0.5.0"]
                  ;;;[compojure "1.5.0"]
-                 [environ "1.0.3"]
+                 ;;;[environ "1.0.3"]
                  ;;;[org.omcljs/om "1.0.0-alpha36"]
-
-                 ;;; rdbms database:
-                 ;;;[org.clojure/java.jdbc "0.6.1"]                       ;; jdbc for clojure
-                 [org.postgresql/postgresql "9.4.1211"]                ;; postgres driver
-                 ;;;[sqlingvo "0.8.14"]                                   ;; sql syntax abstraction layer
-                 [korma "0.4.3"]                                       ;; sql & db abstraction layer
-                 [heroku-database-url-to-jdbc "0.2.2"]                 ;; convert heroku db url to korma compatible config map
 
                  [org.clojure/core.logic "0.8.11"]
                  [aleph "0.4.3"]
