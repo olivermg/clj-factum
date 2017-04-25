@@ -1,6 +1,6 @@
 (defproject clj-factum/server "0.1.0-SNAPSHOT"
   :description "server for clj-factum"
-  :url "http://example.com/FIXME"
+  :url "https://github.com/olivermg/clj-factum/tree/master/backends/postgres"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 

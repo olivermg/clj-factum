@@ -1,6 +1,6 @@
 (defproject clj-factum "0.1.0-SNAPSHOT"
   :description "eventsourcing library"
-  :url "http://example.com/FIXME"
+  :url "https://github.com/olivermg/clj-factum/tree/master/library"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
