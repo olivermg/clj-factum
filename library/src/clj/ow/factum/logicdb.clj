@@ -1,45 +1,21 @@
 (ns ow.factum.logicdb
   (:require [clojure.core.logic.pldb :as lp]
             [clojure.string :as str]
-            [ow.factum.memdb :as m]))
+            [ow.factum.clientstorage :as cs]))
 
 (lp/db-rel fact e a v t)
 
 (defn new-logicdb
-  ([memdb timestamp]
-   {:memdb memdb
+  ([clientstorage timestamp]
+   {:clientstorage clientstorage
     :timestamp timestamp})
-  ([memdb] (new-logicdb memdb nil)))
-
-(defn- project-facts [this]
-  "Projects rawfacts to the timestamp specified in this logicdb.
-This effectively filters those facts that are relevant for the given timestamp,
-i.e. it removes obsolete old facts that are overriden by newer ones or have been
-retracted later on (but before timestamp). If no timestamp is given, current time
-is being assumed."
-  (let [rawfacts (m/get-data (:memdb this))
-        xf (fn [xf]
-             (let [facts* (volatile! {})]
-               (fn
-                 ([] (xf))
-                 ([result] (xf result))
-                 ([result [e a v t action :as input]]
-                  (case action
-                    :add (case (get-in @facts* [e a])
-                           true result
-                           ::retracted (do (vswap! facts* #(update-in % [e] dissoc a))
-                                           result)
-                           nil (do (vswap! facts* #(assoc-in % [e a] true))
-                                   (xf result (take 4 input))))
-                    :retract (do (when (nil? (get-in @facts* [e a]))
-                                   (vswap! facts* #(assoc-in % [e a] ::retracted)))
-                                 result))))))]
-    (into [] xf rawfacts)))
+  ([clientstorage] (new-logicdb clientstorage nil)))
 
 (defn get-core-logic-db [this]
   ;;; TODO: if timestamp is set and not in the future (minus last update),
-  ;;;       we don't need to always recalculate the resulting data:
-  (->> (project-facts this)
+  ;;;       we don't need to always recalculate the resulting data, but can
+  ;;;       instead cache it:
+  (->> (cs/project (:clientstorage this))
        (into [] (map #(vec (cons fact %))))
        (apply lp/db)))
 
