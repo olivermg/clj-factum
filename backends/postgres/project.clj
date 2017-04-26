@@ -1,4 +1,4 @@
-(defproject clj-factum/postgres-backend "0.1.0-SNAPSHOT"
+(defproject clj-factum/postgres-backend "0.1.1-SNAPSHOT"
   :description "postgresql backend for clj-factum"
   :url "https://github.com/olivermg/clj-factum/tree/master/server"
   :license {:name "Eclipse Public License"
@@ -6,7 +6,7 @@
 
   :dependencies [[org.clojure/clojure "1.8.0"]
 
-                 [clj-factum/serverlib "0.1.0-SNAPSHOT"]
+                 [clj-factum/serverlib "0.1.1-SNAPSHOT"]
 
                  ;;; rdbms database:
                  ;;;[org.clojure/java.jdbc "0.6.1"]                       ;; jdbc for clojure
