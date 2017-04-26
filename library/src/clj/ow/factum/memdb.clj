@@ -1,31 +1,18 @@
 (ns ow.factum.memdb
-  (:require [clojure.core.async :refer [go go-loop alts! close! timeout chan]]
-            [ow.factum.backend :as b]))
+  (:require [clojure.core.async :refer [go go-loop alts! close! timeout chan put! >! take! <!]]
+            [ow.factum.backend :as b] ;; TODO: get rid of this dependency, as it may be remote
+            ))
 
-;;;(defrecord MemDb [backend data ctrlch])
-
-(defn new-memdb [backend]
-  ;;;(->MemDb backend (atom []) (chan))
-  {:backend backend
-   :data (atom [])
-   :ctrlch (chan)})
+(defn new-memdb [eventch]
+  (let [data (atom '())]
+    (go-loop [ev (<! eventch)]
+      (swap! data #(conj % ev))
+      (recur (<! eventch)))
+    {:eventch eventch
+     :data data}))
 
 (defn get-data [this]
   @(:data this))
-
-(defn start-polling [{:keys [backend data ctrlch] :as this}
-                     & {:keys [interval]}]
-  (go-loop [[_ ch] []]
-    (when (not= ch ctrlch)
-      (swap! data #(let [[_ _ _ last-tid _] (first %)
-                         next-tid (inc (or last-tid -1))]
-                     (println "will query for tid >=" next-tid)
-                     (let [newdata (b/get-items backend next-tid)]
-                       (concat newdata %))))
-      (recur (alts! [(timeout (or interval 3000)) ctrlch])))))
-
-(defn stop-polling [this]
-  (close! (:ctrlch this)))
 
 (defn add-facts [this facts]
   "Adds one or more facts within one single transaction."

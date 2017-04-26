@@ -1,12 +1,19 @@
 (ns ow.factum.backend.memory
   (:require [ow.factum.backend :as b]))
 
+(defn- save-fact [this t fact]
+  (let [fact (assoc fact 3 t)]
+    (swap! (:facts this)
+           #(conj % fact))
+    fact))
+
 (defrecord MemoryBackend [facts cureid curtid]
 
   b/Backend
 
   (get-items [this since-tid]
     (->> @facts
+         (filter #(>= (nth % 3) since-tid))
          (sort-by #(nth % 3))
          reverse))
 
@@ -16,12 +23,9 @@
   (new-tid [this]
     (swap! curtid inc))
 
-  (save [this [e a v t action :as fact]]
-    (let [ifact [(or e (b/new-eid this))
-                 a v
-                 (or t (b/new-tid this))]]
-      (swap! facts #(conj % (conj ifact (or action :add))))
-      ifact)))
+  (save [this facts]
+    (let [tid (b/new-tid this)]
+      (doall (map #(save-fact this tid %) facts)))))
 
 (defn new-memorybackend []
   (->MemoryBackend (atom '()) (atom -1) (atom -1)))

@@ -3,13 +3,10 @@
             [clojure.string :as str]
             [ow.factum.memdb :as m]))
 
-;;; represents a logicdb at a certain timestamp. if timestamp is nil, 'now' is being assumed:
-;;;(defrecord LogicDb [memdb timestamp])
-
 (lp/db-rel fact e a v t)
 
 (defn new-logicdb
-  ([memdb timestamp] #_(->LogicDb memdb timestamp)
+  ([memdb timestamp]
    {:memdb memdb
     :timestamp timestamp})
   ([memdb] (new-logicdb memdb nil)))
