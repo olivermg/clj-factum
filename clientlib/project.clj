@@ -1,4 +1,4 @@
-(defproject clj-factum "0.1.0-SNAPSHOT"
+(defproject clj-factum/clientlib "0.1.0-SNAPSHOT"
   :description "eventsourcing library"
   :url "https://github.com/olivermg/clj-factum/tree/master/library"
   :license {:name "Eclipse Public License"
@@ -7,6 +7,8 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/core.async "0.3.442"]
                  [org.clojure/core.logic "0.8.11"]
+
+                 [clj-factum/serverlib "0.1.0-SNAPSHOT"] ;; TODO: get rid of this dependency
                  ]
 
   #_:plugins #_[#_[lein-cljsbuild "1.1.3"]
