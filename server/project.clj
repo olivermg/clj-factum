@@ -6,7 +6,7 @@
 
   :dependencies [[org.clojure/clojure "1.8.0"]
 
-                 [clj-factum "0.1.0-SNAPSHOT"]
+                 [clj-factum/serverlib "0.1.0-SNAPSHOT"]
 
                  ;;;[environ "1.1.0"]
 
