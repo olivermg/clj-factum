@@ -11,7 +11,14 @@
   :min-lein-version "2.6.1"
 
   :source-paths ["src/clj"]
+  :java-source-paths ["src/java"]
 
   :test-paths ["test/clj"]
+
+  ;;;:aot :all
+  ;;;:omit-source true
+
+  ;;;:profiles {:uberjar {:aot :all
+  ;;;                     :omit-source true}}
 
   )
