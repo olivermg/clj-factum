@@ -15,7 +15,8 @@
   ;;; TODO: if timestamp is set and not in the future (minus last update),
   ;;;       we don't need to always recalculate the resulting data, but can
   ;;;       instead cache it:
-  (->> (cs/project (:clientstorage this))
+  (->> (cs/project (:clientstorage this)
+                   (:timestamp this))
        (into [] (map #(vec (cons fact %))))
        (apply lp/db)))
 
