@@ -4,11 +4,11 @@
             ))
 
 (defn new-clientstorage [transport]
-  (let [cltch (:clientch transport)
+  (let [rch (:recv-ch transport)
         data (atom '())]
-    (go-loop [msg (<! cltch)]
+    (go-loop [msg (<! rch)]
       (swap! data #(conj % msg))
-      (recur (<! cltch)))
+      (recur (<! rch)))
     {:transport transport
      :data data}))
 

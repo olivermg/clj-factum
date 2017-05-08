@@ -10,7 +10,7 @@
 
 (defn start-polling [{:keys [backend transport ctrlch last-tid] :as this}
                      & {:keys [interval]}]
-  (let [srvch (:serverch transport)]
+  (let [sch (:send-ch transport)]
     (go-loop [[_ ch] []]
       (if (not= ch ctrlch)
         (let [next-tid (inc @last-tid)
@@ -18,7 +18,7 @@
                           (b/get-items backend next-tid))]
           (doseq [[_ _ _ t _ :as row] newrows]
             (println "sending event")
-            (put! srvch row)
+            (put! sch row)
             (when (> t @last-tid)
               (println "increasing to tid" t)
               (reset! last-tid t)))
