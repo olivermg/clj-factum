@@ -3,13 +3,13 @@
             [ow.factum.backend :as b] ;; TODO: get rid of this dependency, as it may be remote
             ))
 
-(defn new-clientstorage [transport]
-  (let [rch (:recv-ch transport)
+(defn clientstorage [client-transport]
+  (let [rch (:recv-ch client-transport)
         data (atom '())]
     (go-loop [msg (<! rch)]
       (swap! data #(conj % msg))
       (recur (<! rch)))
-    {:transport transport
+    {:transport client-transport
      :data data}))
 
 (defn project [this timestamp]
