@@ -10,6 +10,8 @@
                  [com.taoensso/sente "1.11.0"]
 
                  [clj-factum/serverlib "0.1.1-SNAPSHOT"]
+                 [clj-factum/websocket-transport "0.1.1-SNAPSHOT"]
+                 [clj-factum/postgres-backend "0.1.1-SNAPSHOT"]
 
                  ;;;[environ "1.1.0"]
 
@@ -30,12 +32,12 @@
   :min-lein-version "2.6.1"
 
   :source-paths ["src/clj"]
-
+  ;;;:java-source-paths ["src/java"]
   :test-paths ["test/clj"]
 
-  :main ^:skip-aot ow.factum.server
-
   :target-path "target/%s"
+
+  :main ^:skip-aot ow.factum.server
 
   :profiles {:uberjar {:aot :all}}
 
