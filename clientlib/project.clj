@@ -18,8 +18,9 @@
 
   :source-paths ["src/clj" #_"src/cljs" #_"src/cljc"]
   :java-source-paths ["src/java"]
-
   :test-paths ["test/clj" #_"test/cljc"]
+
+  :target-path "target/%s"
 
   ;;;:aot :all
   ;;;:omit-source true

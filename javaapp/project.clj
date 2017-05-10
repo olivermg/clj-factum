@@ -17,7 +17,7 @@
 
   :main javaapp.Main
 
-  ;;;:target-path "target/%s"
+  :target-path "target/%s"
 
   :profiles {:uberjar {:aot :all
                        :omit-source true}})

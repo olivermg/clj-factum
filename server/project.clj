@@ -22,7 +22,7 @@
 
                  ;;; tcp/http server:
                  ;;;[aleph "0.4.3"]
-                 [clj-chatterbox "0.1.0-SNAPSHOT"]
+                 ;;;[clj-chatterbox "0.1.0-SNAPSHOT"]
                  ]
 
   ;;;:plugins [[lein-environ "1.1.0"]]
