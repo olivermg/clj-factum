@@ -2,9 +2,11 @@
   (:require [clojure.edn :as edn]
             [clojure.core.async :refer [go-loop <!]]
             [com.stuartsierra.component :as c]
+            #_[clojure.java.jdbc :as jdbc]
             [ow.factum.transport.websocket.server :as ts]
             [ow.factum.dbpoller :as dbp]
-            [ow.factum.backend.memory :as bm]
+            #_[ow.factum.backend.memory :as bm]
+            [ow.factum.backend.postgres :as bp]
             #_[taoensso.sente :as sente]
             #_[manifold.stream :as s]
             #_[manifold.deferred :as d]
@@ -31,8 +33,10 @@
 
 (defn -main [& args]
   (print "starting... ")
-  (let [cfg (config)
-        dbpoller (dbp/dbpoller (bm/new-memorybackend))
+  (let [{:keys [jdbc] :as cfg} (config)
+        _ (println cfg)
+        backend (-> (bp/new-postgresbackend jdbc) c/start)
+        dbpoller (dbp/dbpoller (bp/new-postgresbackend jdbc))
         transport-server (ts/websocket-server (:on-connect dbpoller))
         #_webapp #_(webapp cfg) #_(tcp/start-server echo-server {:port port})]
     (println "done.")

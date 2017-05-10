@@ -7,7 +7,9 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/core.async "0.3.442"]
                  [com.stuartsierra/component "0.3.2"]
-                 [com.taoensso/sente "1.11.0"]
+                 ;;;[com.taoensso/sente "1.11.0"]
+                 ;;;[org.clojure/java.jdbc "0.7.0-alpha3"]
+                 ;;;[org.postgresql/postgresql "42.1.1"]
 
                  [clj-factum/serverlib "0.1.1-SNAPSHOT"]
                  [clj-factum/websocket-transport "0.1.1-SNAPSHOT"]
