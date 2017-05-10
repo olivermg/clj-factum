@@ -32,7 +32,7 @@ is being assumed."
                                            result)
                            nil (do (vswap! facts* #(assoc-in % [e a] true))
                                    (xf result (take 4 input))))
-                    :retract (do (when (nil? (get-in @facts* [e a]))
+                    :retract (do (when (nil? (get-in @facts* [e a])) ;; TODO: add support for multiple successive retracts
                                    (vswap! facts* #(assoc-in % [e a] ::retracted)))
                                  result))))))]
     (into [] xf @(:data this))))

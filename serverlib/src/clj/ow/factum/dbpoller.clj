@@ -25,7 +25,7 @@
                         newrows (do (println "will query for tid >=" next-tid)
                                     (b/get-items backend next-tid))]
 
-                    (if (process-rows newrows)
+                    (if (process-rows (reverse newrows))
                       (recur (<! (timeout poll-interval)))
                       (println "stopped polling")))))))]
 
