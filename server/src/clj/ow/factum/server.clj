@@ -33,11 +33,12 @@
 
 (defn -main [& args]
   (print "starting... ")
-  (let [{:keys [jdbc] :as cfg} (config)
+  (let [{:keys [jdbc port] :as cfg} (config)
         _ (println cfg)
         backend (-> (bp/new-postgresbackend jdbc) c/start)
         dbpoller (dbp/dbpoller (bp/new-postgresbackend jdbc))
-        transport-server (ts/websocket-server (:on-connect dbpoller))
+        transport-server (ts/websocket-server (:on-connect dbpoller)
+                                              :port port)
         #_webapp #_(webapp cfg) #_(tcp/start-server echo-server {:port port})]
     (println "done.")
     ;;;(c/start webapp)
