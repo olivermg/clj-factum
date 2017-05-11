@@ -25,7 +25,8 @@
 (defn- get-config []
   {:port (Integer. (or (env :port) "8899"))
    :interval (Integer. (or (env :interval) "1000"))
-   :jdbc {:connection-uri (or (env :jdbc-database-url))}})
+   :jdbc {:connection-uri (str (env :jdbc-database-url)
+                               #_"&ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory")}})
 
 (defn -main [& args]
   (print "starting... ")
