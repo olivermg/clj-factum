@@ -7,16 +7,16 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/core.async "0.3.442"]
                  [com.stuartsierra/component "0.3.2"]
-                 ;;;[com.taoensso/sente "1.11.0"]
+                 [environ "1.1.0"]
                  ;;;[org.clojure/java.jdbc "0.7.0-alpha3"]
-                 ;;;[org.postgresql/postgresql "42.1.1"]
+                 [org.postgresql/postgresql "42.1.1"]
+                 #_[heroku-database-url-to-jdbc "0.2.2"]
 
                  [clj-factum/serverlib "0.1.1-SNAPSHOT"]
                  [clj-factum/websocket-transport "0.1.1-SNAPSHOT"]
                  [clj-factum/postgres-backend "0.1.1-SNAPSHOT"]
 
-                 ;;;[environ "1.1.0"]
-
+                 ;;;[com.taoensso/sente "1.11.0"]
                  ;;;[liberator "0.14.1"]
                  ;;;[bidi "2.0.17"]
                  ;;;[hiccup "1.0.5"]
@@ -29,7 +29,7 @@
                  ;;;[clj-chatterbox "0.1.0-SNAPSHOT"]
                  ]
 
-  ;;;:plugins [[lein-environ "1.1.0"]]
+  :plugins [[lein-environ "1.1.0"]]
 
   :min-lein-version "2.6.1"
 

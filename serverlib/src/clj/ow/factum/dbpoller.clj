@@ -4,6 +4,7 @@
 
 (defn dbpoller [backend & {:keys [poll-interval]}]
   (letfn [(make-on-connect [{:keys [backend ctrlch last-tid poll-interval] :as this}]
+            ;;; TODO: we don't even need dedicated polling for each client, as we're polling the same data.
             (fn [recv-ch send-ch]
               (let [process-row (fn [[_ _ _ t _ :as row]]
                                   (println "sending event")

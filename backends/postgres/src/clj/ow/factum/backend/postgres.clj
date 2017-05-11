@@ -38,14 +38,14 @@
                      (values dbfact))]
     [(:e data) (:a data) (:v data) (:t data)]))
 
-(defrecord PostgresBackend [jdbc-def
+(defrecord PostgresBackend [jdbc
                             conn]
 
   c/Lifecycle
 
   (start [this]
     (if-not conn
-      (let [conn* (db/create-db jdbc-def)]
+      (let [conn* (db/create-db jdbc)]
         (db/default-connection conn*)
         (assoc this :conn conn*))
       this))
@@ -81,13 +81,13 @@
      (let [tid (b/new-tid this)]
        (doall (map #(save-fact this tid %) facts))))))
 
-(defn new-postgresbackend [jdbc-def]
-  (let [jdbc-def (merge {:make-pool? true}
-                        jdbc-def)]
-    (map->PostgresBackend {:jdbc-def jdbc-def})))
+(defn new-postgresbackend [jdbc]
+  #_(let [jdbc (merge {:make-pool? true}
+                      jdbc)])
+  (map->PostgresBackend {:jdbc jdbc}))
 
 #_(defn get-conn [pgbackend]
-  (:jdbc-def pgbackend))
+    (:jdbc pgbackend))
 
 
 #_(defn open [url]

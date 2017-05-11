@@ -3,6 +3,8 @@
             [com.stuartsierra.component :as c]
             [ow.rasync.core :refer [websocket-channel-client]]))
 
+;;; TODO: client must somehow tell server what tid to start with after server was away
+
 (defrecord WebsocketClient [recv-ch send-ch client]
 
   c/Lifecycle

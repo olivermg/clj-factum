@@ -2,6 +2,8 @@
   (:require [clojure.edn :as edn]
             [clojure.core.async :refer [go-loop <!]]
             [com.stuartsierra.component :as c]
+            [environ.core :refer [env]]
+            #_[heroku-database-url-to-jdbc.core :as hc]
             #_[clojure.java.jdbc :as jdbc]
             [ow.factum.transport.websocket.server :as ts]
             [ow.factum.dbpoller :as dbp]
@@ -17,26 +19,20 @@
             #_[buddy.sign.jwt :as jwt]
             #_[buddy.auth :refer [authenticated? throw-unauthorized]]
             #_[ow.chatterbox.core :refer [webapp]])
-  (:import [java.io FileNotFoundException])
+  #_(:import [java.io FileNotFoundException])
   (:gen-class))
 
-(def ^:private +default-config+
-  {:port 8899})
-
-(defn- config []
-  (let [cfg (try
-              (-> (slurp "config.edn")
-                  edn/read-string)
-              (catch FileNotFoundException e
-                (println "could not find config.edn")))]
-    (merge +default-config+ cfg)))
+(defn- get-config []
+  {:port (Integer. (or (env :port) "8899"))
+   :interval (Integer. (or (env :interval) "1000"))
+   :jdbc {:connection-uri (or (env :jdbc-database-url))}})
 
 (defn -main [& args]
   (print "starting... ")
-  (let [{:keys [jdbc port] :as cfg} (config)
+  (let [{:keys [jdbc port interval] :as cfg} (get-config)
         _ (println cfg)
         backend (-> (bp/new-postgresbackend jdbc) c/start)
-        dbpoller (dbp/dbpoller (bp/new-postgresbackend jdbc))
+        dbpoller (dbp/dbpoller backend :poll-interval interval)
         transport-server (ts/websocket-server (:on-connect dbpoller)
                                               :port port)
         #_webapp #_(webapp cfg) #_(tcp/start-server echo-server {:port port})]
