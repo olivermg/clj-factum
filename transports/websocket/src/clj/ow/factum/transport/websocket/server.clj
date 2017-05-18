@@ -1,16 +1,14 @@
 (ns ow.factum.transport.websocket.server
-  (:require [com.stuartsierra.component :as c]
-            [ow.rasync.core :refer [websocket-channel-server]]))
+  (:require #_[com.stuartsierra.component :as c]
+            [ow.rasync.core :refer [websocket-channel-server] :as rc]))
 
-(defrecord WebsocketServer [server]
+(defrecord WebsocketServer [server])
 
-  c/Lifecycle
+(defn start [{:keys [server] :as this}]
+  (assoc this :server (rc/start server)))
 
-  (start [this]
-    (assoc this :server (c/start server)))
-
-  (stop [this]
-    (assoc this :server (c/stop server))))
+(defn stop [{:keys [server] :as this}]
+  (assoc this :server (rc/stop server)))
 
 (defn websocket-server [on-connect & {:keys [port]}]
   (map->WebsocketServer {:server (websocket-channel-server on-connect

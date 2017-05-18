@@ -1,19 +1,17 @@
 (ns ow.factum.transport.websocket.client
   (:require [clojure.core.async :refer [chan]]
-            [com.stuartsierra.component :as c]
-            [ow.rasync.core :refer [websocket-channel-client]]))
+            #_[com.stuartsierra.component :as c]
+            [ow.rasync.core :refer [websocket-channel-client] :as rc]))
 
 ;;; TODO: client must somehow tell server what tid to start with after server was away
 
-(defrecord WebsocketClient [recv-ch send-ch client]
+(defrecord WebsocketClient [recv-ch send-ch client])
 
-  c/Lifecycle
+(defn start [{:keys [client] :as this}]
+  (assoc this :client (rc/start client)))
 
-  (start [this]
-    (assoc this :client (c/start client)))
-
-  (stop [this]
-    (assoc this :client (c/stop client))))
+(defn stop [{:keys [client] :as this}]
+  (assoc this :client (rc/stop client)))
 
 (defn websocket-client [url]
   (let [recv-ch (chan)

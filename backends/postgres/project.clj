@@ -5,7 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [com.stuartsierra/component "0.3.2"]
+                 #_[com.stuartsierra/component "0.3.2"]
                  [clj-factum/serverlib "0.1.1-SNAPSHOT"]
 
                  ;;; rdbms database:

@@ -1,6 +1,6 @@
 (ns ow.factum.backend.postgres
   (:refer-clojure :rename {update update-clj})
-  (:require [com.stuartsierra.component :as c]
+  (:require #_[com.stuartsierra.component :as c]
             [korma.db :as db]
             #_[clojure.java.jdbc :refer [with-db-transaction]]
             [korma.core :refer :all]
@@ -41,21 +41,6 @@
 (defrecord PostgresBackend [jdbc
                             conn]
 
-  c/Lifecycle
-
-  (start [this]
-    (if-not conn
-      (let [conn* (db/create-db jdbc)]
-        (db/default-connection conn*)
-        (assoc this :conn conn*))
-      this))
-
-  (stop [this]
-    (if conn
-      (do (some-> conn :pool deref :datasource .close)
-          (assoc this :conn nil))
-      this))
-
   b/Backend
 
   (get-items [this since-tid]
@@ -80,6 +65,19 @@
     (db/transaction
      (let [tid (b/new-tid this)]
        (doall (map #(save-fact this tid %) facts))))))
+
+(defn start [{:keys [jdbc conn] :as this}]
+  (if-not conn
+    (let [conn* (db/create-db jdbc)]
+      (db/default-connection conn*)
+      (assoc this :conn conn*))
+    this))
+
+(defn stop [{:keys [conn] :as this}]
+  (if conn
+    (do (some-> conn :pool deref :datasource .close)
+        (assoc this :conn nil))
+    this))
 
 (defn new-postgresbackend [jdbc]
   #_(let [jdbc (merge {:make-pool? true}
