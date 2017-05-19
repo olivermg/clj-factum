@@ -1,0 +1,10 @@
+{:duct.core/project-ns  sampleclient
+ :duct.core/environment :production
+
+ :duct.module/logging {}
+ ;;;:duct.module.web/api {}
+
+ ;;;:duct.router/cascading
+ ;;;[]
+
+ :sampleclient.websocket/client {}}
