@@ -2,6 +2,8 @@
   (:require [clojure.core.async :refer [go go-loop alts! close! timeout chan put! >! <! take!]]
             [ow.factum.backend :as b]))
 
+;;; TODO: implement start/stop?
+
 (defn dbpoller [backend & {:keys [poll-interval]}]
   (letfn [(make-on-connect [{:keys [backend ctrlch last-tid poll-interval] :as this}]
             ;;; TODO: we don't even need dedicated polling for each client, as we're polling the same data.
