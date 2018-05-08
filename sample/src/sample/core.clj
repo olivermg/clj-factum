@@ -42,15 +42,19 @@
 (defn cltest2 []
   (cldb/db-rel fact e a v t)
 
-  (letfn [(to-entities [db]
+  (letfn [(entities [db]
             (let [lres (cldb/with-db db
                          (cl/run* [q]
-                           (cl/fresh [e a v]
-                             (fact e a v (cl/lvar))
-                             (cl/== q [e a v]))))]
+                           (cl/fresh [e a v t]
+                             (fact e a v t)
+                             (cl/== q [e a v t]))))]
               (when (not-empty lres)
-                (reduce (fn [s [e a v]]
-                          (assoc-in s [e a] v))
+                (reduce (fn [s [e a v t]]
+                          (update-in s [e a]
+                                     (fn [tmap]
+                                       (if tmap
+                                         (assoc tmap t v)
+                                         (sorted-map-by #(* -1 (compare %1 %2)) t v)))))
                         {}
                         lres))))]
 
@@ -65,11 +69,13 @@
                   [fact 100 :address  200           2]
 
                   [fact 101 :type     :person       2]
-                  [fact 101 :name     "bar"         2]
+                  [fact 101 :name     "bar1"        2]
                   [fact 101 :email    "bar@foo.com" 2]
-                  [fact 101 :address  200           2])]
+                  [fact 101 :address  200           2]
+                  [fact 101 :name     "bar2"        4]
+                  [fact 101 :name     "bar3"        3])]
 
-      (cldb/with-db facts1
+      #_(cldb/with-db facts1
         (cl/run* [q]
           (cl/fresh [pid a v]
             (fact pid :type :person (cl/lvar))
@@ -77,7 +83,7 @@
             (fact pid a v (cl/lvar))
             (cl/== q [pid a v]))))
 
-      (to-entities facts1))))
+      (entities facts1))))
 
 ;;; (cltest2)
 
