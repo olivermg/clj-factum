@@ -43,39 +43,49 @@
 (defn cltest2 []
   #_(cldb/db-rel fact e a v t)
 
-  (defn facts->entities [facts & {:keys [at-t]}]
+  (defrecord Snapshot [entities t])
+
+  (defn facts->snapshot [facts & {:keys [at-t]}]
     (let [;;;ldb (apply cldb/db facts)
           #_lres #_(cldb/with-db ldb
                  (cl/run* [q]
                    (cl/fresh [e a v t]
                      (fact e a v t)
-                     (cl/== q [e a v t]))))]
+                     (cl/== q [e a v t]))))
+          maxt (volatile! 0)]
       (when (not-empty facts #_lres)
-        (->> facts #_lres
-             (reduce (fn [s [e a v t]]
-                       (if (or (not at-t) (<= t at-t))
-                         (update-in s [e a]
-                                    (fn [[t2 v2 :as oldval]]
-                                      (if (and t2 (> t2 t))
-                                        oldval
-                                        [t v])))
-                         s))
-                     {})
+        (->Snapshot (->> facts #_lres
+                         (reduce (fn [s [e a v t]]
+                                   (if (or (not at-t) (<= t at-t))
+                                     (do (when (> t @maxt)
+                                           (vreset! maxt t))
+                                         (update-in s [e a]
+                                                    (fn [[t2 v2 :as oldval]]
+                                                      (if (and t2 (> t2 t))
+                                                        oldval
+                                                        [t v]))))
+                                     s))
+                                 {})
              ;;; TODO: this can probably be optimized in terms of memory usage & performance.
              ;;;   instead of building a new map, can we somehow operate on the existing one in
              ;;;   the appropriate nested places?
-             (map (fn [[e am]]
-                    [e (reduce (fn [am [k [t v]]]
-                                 (assoc am k v))
-                               {}
-                               am)]))
-             (into {})))))
+                         (map (fn [[e am]]
+                                [e (reduce (fn [am [k [t v]]]
+                                             (assoc am k v))
+                                           {}
+                                           am)]))
+                         (into {}))
+                    (do (println "MAXT2" @maxt)@maxt)))))
 
-  (defn entities+facts->entities [entities facts & {:keys [at-t]}]
+  (defn snapshot+facts->snapshot [snapshot facts & {:keys [at-t]}]
+    {:pre [(or (nil? at-t) (> at-t (:t snapshot)))]}
     (letfn [(merge-entities [es1 es2]
               (merge-with #(merge %1 %2)
-                          es1 es2))]
-      (merge-entities entities (facts->entities facts :at-t at-t))))
+                          es1 es2))
+            (merge-snapshots [s1 s2]
+              (->Snapshot (merge-entities (:entities s1) (:entities s2))
+                          (:t s2)))]
+      (merge-snapshots snapshot (facts->snapshot facts :at-t at-t))))
 
   (let [facts1 [[#_fact 200 :type     :address      1]
                 [#_fact 200 :street   "street 111"  1]
@@ -100,7 +110,7 @@
                 [#_fact 101 :name     "bar9"        10]
                 [#_fact 101 :name     "bar8"        9]]]
 
-    (entities+facts->entities (facts->entities facts1) facts2)))
+    (snapshot+facts->snapshot (facts->snapshot facts1) facts2)))
 
 ;;; (cltest2)
 
