@@ -41,17 +41,17 @@
 
 
 (defn cltest2 []
-  (cldb/db-rel fact e a v t)
+  #_(cldb/db-rel fact e a v t)
 
   (defn facts->entities [facts & {:keys [at-t]}]
-    (let [ldb (apply cldb/db facts)
-          lres (cldb/with-db ldb
+    (let [;;;ldb (apply cldb/db facts)
+          #_lres #_(cldb/with-db ldb
                  (cl/run* [q]
                    (cl/fresh [e a v t]
                      (fact e a v t)
                      (cl/== q [e a v t]))))]
-      (when (not-empty lres)
-        (->> lres
+      (when (not-empty facts #_lres)
+        (->> facts #_lres
              (reduce (fn [s [e a v t]]
                        (if (or (not at-t) (<= t at-t))
                          (update-in s [e a]
@@ -71,33 +71,34 @@
                                am)]))
              (into {})))))
 
-  (defn merge-entities [es1 es2]
-    (merge-with #(merge %1 %2)
-                es1 es2))
-
   (defn entities+facts->entities [entities facts & {:keys [at-t]}]
-    (merge-entities entities (facts->entities facts :at-t at-t)))
+    (letfn [(merge-entities [es1 es2]
+              (merge-with #(merge %1 %2)
+                          es1 es2))]
+      (merge-entities entities (facts->entities facts :at-t at-t))))
 
-  (let [facts1 [[fact 200 :type     :address      1]
-                [fact 200 :street   "street 111"  1]
-                [fact 200 :number   111           1]
+  (let [facts1 [[#_fact 200 :type     :address      1]
+                [#_fact 200 :street   "street 111"  1]
+                [#_fact 200 :number   111           1]
 
-                [fact 100 :type     :person       2]
-                [fact 100 :name     "foo"         2]
-                [fact 100 :email    "foo@bar.com" 2]
-                [fact 100 :address  200           2]
+                [#_fact 100 :type     :person       2]
+                [#_fact 100 :name     "foo"         2]
+                [#_fact 100 :email    "foo@bar.com" 2]
+                [#_fact 100 :address  200           2]
 
-                [fact 101 :type     :person       2]
-                [fact 101 :name     "bar1"        2]
-                [fact 101 :email    "bar@foo.com" 2]
-                [fact 101 :address  200           2]
-                [fact 101 :name     "bar3"        4]
-                [fact 101 :name     "bar5"        6]
-                [fact 101 :name     "bar2"        3]
-                [fact 101 :name     "bar4"        5]]
+                [#_fact 101 :type     :person       2]
+                [#_fact 101 :name     "bar1"        2]
+                [#_fact 101 :email    "bar@foo.com" 2]
+                [#_fact 101 :address  200           2]
+                [#_fact 101 :name     "bar3"        4]
+                [#_fact 101 :name     "bar5"        6]
+                [#_fact 101 :name     "bar2"        3]
+                [#_fact 101 :name     "bar4"        5]]
 
-        facts2 [[fact 101 :name     "bar7"        8]
-                [fact 101 :name     "bar6"        7]]]
+        facts2 [[#_fact 101 :name     "bar7"        8]
+                [#_fact 101 :name     "bar6"        7]
+                [#_fact 101 :name     "bar9"        10]
+                [#_fact 101 :name     "bar8"        9]]]
 
     (entities+facts->entities (facts->entities facts1) facts2)))
 
