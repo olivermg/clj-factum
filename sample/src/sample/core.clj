@@ -62,7 +62,8 @@
                          s))
                      {})
              ;;; TODO: this can probably be optimized in terms of memory usage & performance.
-             ;;;   instead of building a new map, can we somehow operate on the existing one?
+             ;;;   instead of building a new map, can we somehow operate on the existing one in
+             ;;;   the appropriate nested places?
              (map (fn [[e am]]
                     [e (reduce (fn [am [k [t v]]]
                                  (assoc am k v))
