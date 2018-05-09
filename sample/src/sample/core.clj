@@ -54,7 +54,7 @@
                                      (fn [tmap]
                                        (if tmap
                                          (assoc tmap t v)
-                                         (sorted-map-by #(* -1 (compare %1 %2)) t v)))))
+                                         (sorted-map-by #(compare %2 %1) t v)))))
                         {}
                         lres))))]
 
