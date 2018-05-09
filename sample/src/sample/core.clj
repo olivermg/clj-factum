@@ -44,6 +44,7 @@
   (cldb/db-rel fact e a v t)
 
   (defn facts->entities [facts & {:keys [at-t]}]
+    (println "FTE" facts at-t)
     (let [ldb (apply cldb/db facts)
           lres (cldb/with-db ldb
                  (cl/run* [q]
@@ -70,12 +71,12 @@
                                am)]))
              (into {})))))
 
-  (defrecord Snapshot [state])
+  (defn merge-entities [es1 es2]
+    (merge-with #(merge %1 %2)
+                es1 es2))
 
-  (defn snapshot [facts t]
-    )
-
-  (defrecord VersionedAttribute [m])
+  (defn entities+facts->entities [entities facts & {:keys [at-t]}]
+    (merge-entities entities (facts->entities facts :at-t at-t)))
 
   (let [facts1 [[fact 200 :type     :address      1]
                 [fact 200 :street   "street 111"  1]
@@ -93,9 +94,12 @@
                 [fact 101 :name     "bar3"        4]
                 [fact 101 :name     "bar5"        6]
                 [fact 101 :name     "bar2"        3]
-                [fact 101 :name     "bar4"        5]]]
+                [fact 101 :name     "bar4"        5]]
 
-    (facts->entities facts1 :at-t 5)))
+        facts2 [[fact 101 :name     "bar7"        8]
+                [fact 101 :name     "bar6"        7]]]
+
+    (entities+facts->entities (facts->entities facts1) facts2)))
 
 ;;; (cltest2)
 
