@@ -39,53 +39,79 @@
 ;;; (cltest1)
 
 
+
 (defn cltest2 []
   (cldb/db-rel fact e a v t)
 
-  (letfn [(entities [db]
-            (let [lres (cldb/with-db db
-                         (cl/run* [q]
-                           (cl/fresh [e a v t]
-                             (fact e a v t)
-                             (cl/== q [e a v t]))))]
-              (when (not-empty lres)
-                (reduce (fn [s [e a v t]]
-                          (update-in s [e a]
-                                     (fn [tmap]
-                                       (if tmap
-                                         (assoc tmap t v)
-                                         (sorted-map-by #(compare %2 %1) t v)))))
-                        {}
-                        lres))))]
+  (defn facts->entities [facts & {:keys [at-t]}]
+    (let [ldb (apply cldb/db facts)
+          lres (cldb/with-db ldb
+                 (cl/run* [q]
+                   (cl/fresh [e a v t]
+                     (fact e a v t)
+                     (cl/== q [e a v t]))))]
+      (when (not-empty lres)
+        (->> lres
+             (reduce (fn [s [e a v t]]
+                       (if (or (not at-t) (<= t at-t))
+                         (update-in s [e a]
+                                    (fn [[t2 v2 :as oldval]]
+                                      (if (and t2 (> t2 t))
+                                        oldval
+                                        [t v])))
+                         s))
+                     {})
+             ;;; TODO: this can probably be optimized in terms of memory usage & performance.
+             ;;;   instead of building a new map, can we somehow operate on the existing one?
+             (map (fn [[e am]]
+                    [e (reduce (fn [am [k [t v]]]
+                                 (assoc am k v))
+                               {}
+                               am)]))
+             (into {})))))
 
-    (let [facts1 (cldb/db
-                  [fact 200 :type     :address      1]
-                  [fact 200 :street   "street 111"  1]
-                  [fact 200 :number   111           1]
+  (defrecord Snapshot [state])
 
-                  [fact 100 :type     :person       2]
-                  [fact 100 :name     "foo"         2]
-                  [fact 100 :email    "foo@bar.com" 2]
-                  [fact 100 :address  200           2]
+  (defn snapshot [facts t]
+    )
 
-                  [fact 101 :type     :person       2]
-                  [fact 101 :name     "bar1"        2]
-                  [fact 101 :email    "bar@foo.com" 2]
-                  [fact 101 :address  200           2]
-                  [fact 101 :name     "bar2"        4]
-                  [fact 101 :name     "bar3"        3])]
+  (defrecord VersionedAttribute [m])
 
-      #_(cldb/with-db facts1
-        (cl/run* [q]
-          (cl/fresh [pid a v]
-            (fact pid :type :person (cl/lvar))
-            (fact pid :address 200 (cl/lvar))
-            (fact pid a v (cl/lvar))
-            (cl/== q [pid a v]))))
+  (let [facts1 [[fact 200 :type     :address      1]
+                [fact 200 :street   "street 111"  1]
+                [fact 200 :number   111           1]
 
-      (entities facts1))))
+                [fact 100 :type     :person       2]
+                [fact 100 :name     "foo"         2]
+                [fact 100 :email    "foo@bar.com" 2]
+                [fact 100 :address  200           2]
+
+                [fact 101 :type     :person       2]
+                [fact 101 :name     "bar1"        2]
+                [fact 101 :email    "bar@foo.com" 2]
+                [fact 101 :address  200           2]
+                [fact 101 :name     "bar3"        4]
+                [fact 101 :name     "bar5"        6]
+                [fact 101 :name     "bar2"        3]
+                [fact 101 :name     "bar4"        5]]]
+
+    (facts->entities facts1 :at-t 5)))
 
 ;;; (cltest2)
+
+
+
+(defn xftest []
+  (let [r (range 50000000)
+        f1 #(+ % %)
+        f2 dec
+        f3 #(* % 10)
+        ;;;s1 (doall (->> r (map f1) (map f2) (map f3)))
+        s2 (doall (sequence (comp (map f1) (map f2) (map f3)) r))
+        ]
+    (count s2)))
+
+;;; (xftest)
 
 
 
