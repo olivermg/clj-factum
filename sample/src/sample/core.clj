@@ -44,7 +44,6 @@
   (cldb/db-rel fact e a v t)
 
   (defn facts->entities [facts & {:keys [at-t]}]
-    (println "FTE" facts at-t)
     (let [ldb (apply cldb/db facts)
           lres (cldb/with-db ldb
                  (cl/run* [q]
