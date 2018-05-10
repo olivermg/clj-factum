@@ -116,6 +116,30 @@
 
 
 
+(defn etest []
+  (cldb/db-rel person p)
+  (cldb/db-rel address a)
+  (cldb/db-rel person->address p a)
+
+  (let [facts1 [(address {:id 100
+                          :type :address
+                          :street "street 1"})
+                (address {:id 101
+                          :type :address
+                          :street "street 2"})
+                (person {:id 200
+                         :type :person
+                         :name "hans 1"
+                         :address_id 100})]]
+    (cldb/with-db (cldb/db facts1)
+      (cl/run* [q]
+        (cl/fresh [p]
+          (person {:id 100}))))))
+
+;;; (etest)
+
+
+
 (defn xftest []
   (let [r (range 50000000)
         f1 #(+ % %)
