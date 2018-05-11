@@ -117,24 +117,48 @@
 
 
 (defn etest []
+  (cldb/db-rel instance x)
   (cldb/db-rel person p)
   (cldb/db-rel address a)
   (cldb/db-rel person->address p a)
 
-  (let [facts1 [(address {:id 100
+  (let [facts1 [[instance {:type :foo :a 1 :b 2}]
+                [instance {:type :bar :a 2 :b 3}]
+                [address {:id 100
                           :type :address
-                          :street "street 1"})
-                (address {:id 101
+                          :street "street 1"}]
+                [address {:id 101
                           :type :address
-                          :street "street 2"})
-                (person {:id 200
+                          :street "street 2"}]
+                [person {:id 200
                          :type :person
                          :name "hans 1"
-                         :address_id 100})]]
-    (cldb/with-db (cldb/db facts1)
+                         :address_id 100}]
+                [person {:id 201
+                         :type :person
+                         :name "hans 2"
+                         :address_id 101}]]
+        ldb (apply cldb/db facts1)]
+    (cldb/with-db ldb
       (cl/run* [q]
-        (cl/fresh [p]
-          (person {:id 100}))))))
+        #_(foo q 22)
+        (cl/fresh [p o a b]
+          (instance q)
+          (cl/featurec q {:type :foo})
+
+          #_(person p)
+          #_(cl/featurec p {:type :person})
+          #_(cl/featurec p {:name "hans 1"})
+          #_(cl/featurec p {:id q})
+
+          #_(cl/== q p)
+          #_(foo q b)
+          #_(cl/== q [a b])
+          #_(cl/matcha [] ([(person {:id 200 :name q})]))
+          #_(cl/== p {:a 1 :b 2 :c 3})
+          #_(cl/matcha [p]
+                     ([{:a 1 :b 2 :c q}])
+                     #_([[_ . o]] (cl/== q ["second" o]))))))))
 
 ;;; (etest)
 
