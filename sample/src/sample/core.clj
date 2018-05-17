@@ -117,50 +117,164 @@
 
 
 (defn etest []
-  (cldb/db-rel instance x)
-  (cldb/db-rel person p)
-  (cldb/db-rel address a)
-  (cldb/db-rel person->address p a)
+  (cldb/db-rel fact ^:index e ^:index a ^:index v ^:index t)
 
-  (let [facts1 [[instance {:type :foo :a 1 :b 2}]
-                [instance {:type :bar :a 2 :b 3}]
-                [address {:id 100
-                          :type :address
-                          :street "street 1"}]
-                [address {:id 101
-                          :type :address
-                          :street "street 2"}]
-                [person {:id 200
-                         :type :person
-                         :name "hans 1"
-                         :address_id 100}]
-                [person {:id 201
-                         :type :person
-                         :name "hans 2"
-                         :address_id 101}]]
-        ldb (apply cldb/db facts1)]
-    (cldb/with-db ldb
-      (cl/run* [q]
-        #_(foo q 22)
-        (cl/fresh [p o a b]
-          (instance q)
-          (cl/featurec q {:type :foo})
+  #_(cldb/db-rel entity x)
+  (cldb/db-rel person ^:index id ^:index name data)
+  (cldb/db-rel address ^:index id ^:index street data)
+  (cldb/db-rel person<->address ^:index id ^:index personid ^:index addressid data)
 
-          #_(person p)
-          #_(cl/featurec p {:type :person})
-          #_(cl/featurec p {:name "hans 1"})
-          #_(cl/featurec p {:id q})
+  (letfn [(entity->ldb [{:keys [:db/id :db/type] :as entity} & {:keys [index-defs]}]
+            (let [index-def (get index-defs type)
+                  index-vals (map #(get entity %) index-def)
+                  rel (some-> (ns-resolve *ns* (-> type name symbol)) deref)]
+              (vec (concat [rel id]
+                           index-vals
+                           [entity]))))
 
-          #_(cl/== q p)
-          #_(foo q b)
-          #_(cl/== q [a b])
-          #_(cl/matcha [] ([(person {:id 200 :name q})]))
-          #_(cl/== p {:a 1 :b 2 :c 3})
-          #_(cl/matcha [p]
-                     ([{:a 1 :b 2 :c q}])
-                     #_([[_ . o]] (cl/== q ["second" o]))))))))
+          (entities->ldb [entities & args]
+            (map #(apply entity->ldb % args) entities))]
+
+    (let [facts [[100 :db/type    :address          1]
+                 [100 :street     "street 1"        1]
+                 [101 :db/type    :address          2]
+                 [101 :street     "street 2"        2]
+                 [200 :db/type    :person           3]
+                 [200 :name       "hans 1"          3]
+                 [201 :db/type    :person           4]
+                 [201 :name       "hans 2"          4]
+                 [300 :db/type    :person<->address 5]
+                 [300 :person_id  200               5]
+                 [300 :address_id 100               5]
+                 [301 :db/type    :person<->address 6]
+                 [301 :person_id  200               6]
+                 [301 :address_id 101               6]
+                 [302 :db/type    :person<->address 7]
+                 [302 :person_id  201               7]
+                 [302 :address_id 101               7]]
+
+          index-defs {:person           [:name]
+                      :address          [:street]
+                      :person<->address [:person_id :address_id]}
+          #_index-defs #_(->> index-defs
+                          (map (fn [[type v]]
+                                 [type (->> (map (fn [e i]
+                                                   [e i])
+                                                 v
+                                                 (range))
+                                            (into {}))]))
+                          (into {}))
+
+          entities [{:db/id 100
+                     :db/type :address
+                     :street "street 1"}
+                    {:db/id 101
+                     :db/type :address
+                     :street "street 2"}
+                    {:db/id 200
+                     :db/type :person
+                     :name "hans 1"}
+                    {:db/id 201
+                     :db/type :person
+                     :name "hans 2"}
+                    {:db/id 300
+                     :db/type :person<->address
+                     :person_id 200
+                     :address_id 100}
+                    {:db/id 301
+                     :db/type :person<->address
+                     :person_id 200
+                     :address_id 101}
+                    {:db/id 302
+                     :db/type :person<->address
+                     :person_id 201
+                     :address_id 101}]
+
+          entities-ldb (entities->ldb entities :index-defs index-defs)]
+
+      #_(println entities-ldb)
+
+      (cldb/with-db (apply cldb/db entities-ldb)
+        (cl/run* [q]
+          #_(foo q 22)
+          (cl/fresh [p pid pn aid]
+            (person pid "hans 2" p)
+            (person<->address (cl/lvar) pid aid (cl/lvar))
+            (address aid (cl/lvar) q)
+
+            #_(instance q)
+            #_(cl/featurec q {:type :foo})
+
+            #_(person p)
+            #_(cl/featurec p {:type :person})
+            #_(cl/featurec p {:name "hans 1"})
+            #_(cl/featurec p {:id q})
+
+            #_(cl/== q p)
+            #_(foo q b)
+            #_(cl/== q [a b])
+            #_(cl/matcha [] ([(person {:id 200 :name q})]))
+            #_(cl/== p {:a 1 :b 2 :c 3})
+            #_(cl/matcha [p]
+                         ([{:a 1 :b 2 :c q}])
+                         #_([[_ . o]] (cl/== q ["second" o])))))))))
 
 ;;; (etest)
+
+
+
+(defn idxtest []
+  (letfn [(order-datom [datom order]
+            (mapv #(get datom %) order))
+
+          (build-index [datoms order]
+            (let [idx* (volatile! {})]
+              (doseq [d datoms]
+                (vswap! idx* #(assoc-in % (order-datom d order) d)))
+              {:order order
+               :index @idx*}))
+
+          (leafs [index]
+            (let [leafs* (transient [])]
+              (loop [[node & nodes] (list index)]
+                (cond
+                  (map? node)       (recur (concat (vals node) nodes))
+                  (not (nil? node)) (do (conj! leafs* node)
+                                        (recur nodes))
+                  true              (persistent! leafs*)))))
+
+          (lookup-index [{:keys [order index] :as idx} ks]
+            (loop [node index
+                   [k & ks] ks]
+              (cond
+                (nil? k)          node
+                (not (nil? node)) (recur (get node k) ks))))]
+
+    (let [datoms [[100 :db/type    :address          1]
+                  [100 :street     "street 1"        1]
+                  [101 :db/type    :address          2]
+                  [101 :street     "street 2"        2]
+                  [200 :db/type    :person           3]
+                  [200 :name       "hans 1"          3]
+                  [201 :db/type    :person           4]
+                  [201 :name       "hans 2"          4]
+                  [302 :db/type    :person<->address 7]
+                  [302 :person_id  201               7]
+                  [302 :address_id 101               7]
+                  [301 :db/type    :person<->address 6]
+                  [301 :person_id  200               6]
+                  [301 :address_id 101               6]
+                  [300 :db/type    :person<->address 5]
+                  [300 :person_id  200               5]
+                  [300 :address_id 100               5]]]
+
+      #_(build-index datoms [0 1 2 3])
+      #_(build-index datoms [1 0 2 3])
+      (-> (build-index datoms [1 2 0 3])
+          (lookup-index [:name "hans 2"])
+          (leafs)))))
+
+;;; (idxtest)
 
 
 
