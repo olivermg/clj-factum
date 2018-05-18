@@ -58,7 +58,16 @@
   Object
 
   (toString [this]
-    (.toString m)))
+    (.toString m))
+
+  (equiv [this o]
+    (.equiv m o))
+
+
+  clojure.lang.IHashEq
+
+  (hasheq [this]
+    (.hasheq m)))
 
 
 (defn range-map [kind & kvs]
