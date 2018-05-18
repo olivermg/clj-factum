@@ -37,6 +37,12 @@
         not-found)))
 
 
+  clojure.lang.IFn
+
+  (invoke [this arg1]
+    (.valAt this arg1))
+
+
   clojure.lang.Seqable
 
   (seq [this]
