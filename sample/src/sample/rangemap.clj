@@ -3,6 +3,8 @@
 
 (deftype RangeMap [kind ^clojure.lang.IPersistentMap m leftfn rightfn]
 
+  clojure.lang.MapEquivalence
+
   clojure.lang.IPersistentMap
 
   (assoc [this k v]
@@ -10,6 +12,9 @@
 
   (assocEx [this k v]
     (RangeMap. kind (.assocEx m k v) leftfn rightfn))
+
+  (without [this k]
+    (RangeMap. kind (.without m k) leftfn rightfn))
 
 
   clojure.lang.ILookup
@@ -49,9 +54,30 @@
     (.seq m))
 
 
-  java.lang.Iterable
+  clojure.lang.Associative
 
-  (iterator [this]
+  (containsKey [this k]
+    (.containsKey m k))
+
+
+  clojure.lang.IPersistentCollection
+
+  (equiv [this o]
+    (.equiv m o))
+
+  (empty [this]
+    (RangeMap. kind (.empty m) leftfn rightfn))
+
+  (cons [this o]
+    (RangeMap. kind (.cons m o) leftfn rightfn))
+
+  (count [this]
+    (.count m))
+
+
+  #_java.lang.Iterable
+
+  #_(iterator [this]
     (.iterator m))
 
 
@@ -60,8 +86,14 @@
   (toString [this]
     (.toString m))
 
-  (equiv [this o]
-    (.equiv m o))
+
+  java.util.Map
+
+  (size [this]
+    (.size m))
+
+  (get [this k]
+    (.valAt this k))
 
 
   clojure.lang.IHashEq
