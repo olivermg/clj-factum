@@ -78,3 +78,64 @@
     (let [m (-> (range-map :find-ceiling)
                 (dissoc :a))]
       (is (= m {})))))
+
+
+(deftest test-lookup-ceiling-even
+  (testing "lookup (ceiling, even no. of keys)"
+    (let [m (range-map :find-ceiling 5 [3 4 5], 2 [1 2], 8 [6 7 8], 12 [9 10 11 12], 15 [13 14 15], 16 [16])]
+      (is (= [6 7 8] (get m 8)))      ;; exact match
+      (is (= [6 7 8] (get m 7)))      ;; range match
+      (is (= [1 2]   (get m 0)))      ;; lower key
+      (is (= nil     (get m 100)))    ;; higher key
+      )))
+
+
+(deftest test-lookup-ceiling-odd
+  (testing "lookup (ceiling, odd no. of keys)"
+    (let [m (range-map :find-ceiling 5 [3 4 5], 2 [1 2], 8 [6 7 8], 12 [9 10 11 12], 15 [13 14 15])]
+      (is (= [6 7 8] (get m 8)))      ;; exact match
+      (is (= [6 7 8] (get m 7)))      ;; range match
+      (is (= [1 2]   (get m 0)))      ;; lower key
+      (is (= nil     (get m 100)))    ;; higher key
+      )))
+
+
+(deftest test-lookup-ceiling-empty
+  (testing "lookup (ceiling, empty map)"
+    (let [m (range-map :find-ceiling)]
+      (is (= nil (get m 0)))
+      (is (= nil (get m 100))))))
+
+
+(deftest test-lookup-floor-even
+  (testing "lookup (floor, even no. of keys)"
+    (let [m (range-map :find-floor 5 [3 4 5], 2 [1 2], 8 [6 7 8], 12 [9 10 11 12], 15 [13 14 15], 16 [16])]
+      (is (= [6 7 8] (get m 8)))      ;; exact match
+      (is (= [3 4 5] (get m 7)))      ;; range match
+      (is (= nil     (get m 0)))      ;; lower key
+      (is (= [16]    (get m 100)))    ;; higher key
+      )))
+
+
+(deftest test-lookup-floor-odd
+  (testing "lookup (floor, odd no. of keys)"
+    (let [m (range-map :find-floor 5 [3 4 5], 2 [1 2], 8 [6 7 8], 12 [9 10 11 12], 15 [13 14 15])]
+      (is (= [6 7 8]    (get m 8)))      ;; exact match
+      (is (= [3 4 5]    (get m 7)))      ;; range match
+      (is (= nil        (get m 0)))      ;; lower key
+      (is (= [13 14 15] (get m 100)))    ;; higher key
+      )))
+
+
+(deftest test-lookup-floor-empty
+  (testing "lookup (floor, empty map)"
+    (let [m (range-map :find-floor)]
+      (is (= nil (get m 0)))
+      (is (= nil (get m 100))))))
+
+
+(deftest test-fn
+  (testing "function invocation"
+    (let [m (range-map :find-ceiling 5 [3 4 5], 2 [1 2], 8 [6 7 8], 12 [9 10 11 12], 15 [13 14 15])]
+      (is (= [6 7 8] (m 8)))
+      (is (= [6 7 8] (m 7))))))
