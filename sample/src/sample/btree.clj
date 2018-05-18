@@ -28,11 +28,13 @@
   (valAt [this k not-found]
     (let [idx (loop [ks     (keys m)
                      lastki nil]
+                #_(println "LOOP1" lastki ks)
                 (if (not-empty ks)
                   (let [n   (count ks)
                         i   (int (/ n 2))
                         ki  (get (vec ks) i)
                         cmp (compare ki k)]
+                    #_(println "LOOP2" n i ki cmp)
                     (cond
                       (> cmp 0) (recur (take i ks)       (if (= kind :find-floor)   lastki ki))  ;; traverse left
                       (< cmp 0) (recur (drop (inc i) ks) (if (= kind :find-ceiling) lastki ki))  ;; traverse right
