@@ -136,6 +136,8 @@
 
 (deftest test-fn
   (testing "function invocation"
-    (let [m (range-map :find-ceiling 5 [3 4 5], 2 [1 2], 8 [6 7 8], 12 [9 10 11 12], 15 [13 14 15])]
-      (is (= [6 7 8] (m 8)))
-      (is (= [6 7 8] (m 7))))))
+    (let [m (range-map :find-ceiling :e [3 4 5], :b [1 2], :h [6 7 8])]
+      (is (= [6 7 8] (m :h)))
+      (is (= [3 4 5] (m :d)))
+      (is (= [6 7 8] (:h m)))
+      (is (= [3 4 5] (:d m))))))
