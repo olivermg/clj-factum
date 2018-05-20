@@ -9,22 +9,23 @@
   (search [this k]))
 
 
-(defrecord B+Tree [b key-fn
-                   slots root? leaf?]
+(defrecord B+Tree [b slots root? leaf?]
 
   TreeModify
 
   (add [this v]
-    (->B+Tree b key-fn (assoc slots (key-fn v) v) root? leaf?))
+    (->B+Tree b (assoc slots (last v) v) root? leaf?))
 
   TreeSearch
 
   (search [this k]
-    (get slots k)))
+    (when-let [ref (get slots k)]
+      (if (satisfies? TreeSearch ref)
+        (search ref k)
+        ref))))
 
 
-(defn b+tree [b key-fn & {:keys [root? leaf?]
-                          :or {root? true
-                               leaf? true}}]
-  (->B+Tree b key-fn
-            (rm/range-map :find-ceiling) root? leaf?))
+(defn b+tree [b & {:keys [root? leaf?]
+                   :or {root? true
+                        leaf? true}}]
+  (->B+Tree b (rm/range-map :find-ceiling) root? leaf?))
