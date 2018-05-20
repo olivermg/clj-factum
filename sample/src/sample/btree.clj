@@ -10,19 +10,17 @@
 
 
 (defrecord B+Tree [b key-fn
-                   slots root? leaf?])
-
-(extend-type B+Tree
+                   slots root? leaf?]
 
   TreeModify
 
-  (add [{:keys [key-fn slots] :as this} v]
-    (assoc slots (key-fn v) v))
+  (add [this v]
+    (->B+Tree b key-fn (assoc slots (key-fn v) v) root? leaf?))
 
   TreeSearch
 
   (search [this k]
-    ))
+    (get slots k)))
 
 
 (defn b+tree [b key-fn & {:keys [root? leaf?]
