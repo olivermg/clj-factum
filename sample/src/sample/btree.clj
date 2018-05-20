@@ -4,18 +4,18 @@
 
 
 (defprotocol TreeModify
-  (add [this v]))
+  (add [this k v root]))
 
 (defprotocol TreeSearch
   (search [this k]))
 
 
 
-(defrecord BinaryTree [key-fn l r]
+(defrecord BinaryTree [k* v* l r]
 
   TreeModify
 
-  (add [this v]
+  (add [this k v root]
     )
 
   TreeSearch
