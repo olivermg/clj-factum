@@ -1,20 +1,20 @@
 (ns sample.rangemap)
 
 
-(deftype RangeMap [kind ^clojure.lang.IPersistentMap m leftfn rightfn]
+(deftype RangeMap [kind ^clojure.lang.IPersistentMap m leftfn rightfn fallback-val]
 
   clojure.lang.MapEquivalence
 
   clojure.lang.IPersistentMap
 
   (assoc [this k v]
-    (RangeMap. kind (.assoc m k v) leftfn rightfn))
+    (RangeMap. kind (.assoc m k v) leftfn rightfn fallback-val))
 
   (assocEx [this k v]
-    (RangeMap. kind (.assocEx m k v) leftfn rightfn))
+    (RangeMap. kind (.assocEx m k v) leftfn rightfn fallback-val))
 
   (without [this k]
-    (RangeMap. kind (.without m k) leftfn rightfn))
+    (RangeMap. kind (.without m k) leftfn rightfn fallback-val))
 
 
   clojure.lang.ILookup
@@ -39,7 +39,7 @@
                   lastki))]
       (if-not (nil? idx)
         (get m idx)
-        not-found)))
+        (or not-found fallback-val))))
 
 
   clojure.lang.IFn
@@ -59,6 +59,9 @@
   (containsKey [this k]
     (.containsKey m k))
 
+  (entryAt [this k]
+    (.entryAt m k))
+
 
   clojure.lang.IPersistentCollection
 
@@ -66,10 +69,10 @@
     (.equiv m o))
 
   (empty [this]
-    (RangeMap. kind (.empty m) leftfn rightfn))
+    (RangeMap. kind (.empty m) leftfn rightfn fallback-val))
 
   (cons [this o]
-    (RangeMap. kind (.cons m o) leftfn rightfn))
+    (RangeMap. kind (.cons m o) leftfn rightfn fallback-val))
 
   (count [this]
     (.count m))
@@ -102,7 +105,7 @@
     (.hasheq m)))
 
 
-(defn range-map [kind & kvs]
+(defn range-map [kind fallback-val & kvs]
   {:pre [(or (= kind :find-ceiling)
              (= kind :find-floor))]}
   (let [[leftfn rightfn] (case kind
@@ -110,10 +113,4 @@
                                           (fn [lastki ki] ki)]
                            :find-ceiling [(fn [lastki ki] ki)
                                           (fn [lastki ki] lastki)])]
-    (->RangeMap kind (apply sorted-map kvs) leftfn rightfn)))
-
-(defn range-map-ceiling [& kvs]
-  (apply range-map :find-ceiling kvs))
-
-(defn range-map-floor [& kvs]
-  (apply range-map :find-floor kvs))
+    (->RangeMap kind (apply sorted-map kvs) leftfn rightfn fallback-val)))
