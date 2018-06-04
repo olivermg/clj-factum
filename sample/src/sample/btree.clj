@@ -40,6 +40,32 @@
 
 
 
+#_(defn- binary-tree-leafnode? [{:keys [l r] :as this}]
+  (and (nil? l) (nil? r)))
+
+#_(defrecord Binary+TreeNode [k* v* l r]
+
+  TreeModify
+
+  (add [this k v]
+    (let [[l r] (if (<= (compare k k*) 0)
+                  [(if-not (nil? l)
+                     (add l k v)
+                     (Binary+TreeNode. k v nil nil))
+                   r]
+                  [l
+                   (if-not (nil? r)
+                     (add r k v)
+                     (Binary+TreeNode. k v nil nil))])]
+      (BinaryTreeNode. k* )))
+
+  TreeSearch
+
+  (search [this k]
+    ))
+
+
+
 #_(defrecord B+TreeChildren [children-map largest-child]
 
   TreeModify
@@ -60,31 +86,42 @@
 
 
 
-#_(defrecord B+Tree [b size key-fn children root? leaf?]
+(defrecord B+Tree [b size children leaf?]
 
   TreeModify
 
-  (add* [this v]
-    (let [k (key-fn v)]
+  (add [this k v]
+    (letfn [(new-leafnode []
+              (->B+Tree b 0 (rm/range-map :find-ceiling nil) true))
+            (new-interiornode []
+              (->B+Tree b 0 (rm/range-map :find-ceiling (->B+Tree b 0 (rm/range-map :find-ceiling nil))) false))
+            (balance [{:keys [children] :as this}]
+              (if (< (:size children) b)
+                this
+                ))]
+
       (if leaf?
-        (->B+Tree b (inc size) key-fn (assoc children k v) root? leaf?)
-        (if-let [child (get children k)]
-          (add child v)
-          (->B+Tree b (inc size) key-fn (assoc children k v) root? leaf?)))))
+        (if (< size b)
+          [(->B+Tree b (inc size) (assoc children k v) leaf?)]
+          (let [children (assoc children k v)
+                size (inc size)
+                [ks1 ks2] (partition-all (-> size (/ 2) Math/ceil int) (keys children))
+                [cs1 cs2] [(select-keys children ks1) (select-keys children ks2)]]
+            [(->B+Tree b (count cs1) cs1 leaf?)
+             (->B+Tree b (count cs2) cs2 leaf?)]))
+
+        (let [child (get children k)]
+          (add child k v)
+          #_(->B+Tree b (inc size) (assoc children k v) leaf?)))))
 
   TreeSearch
 
-  (search* [this k]
+  (search [this k]
     (when-let [child (get children k)]
       (if (satisfies? TreeSearch child)
         (search child k)
         child))))
 
 
-#_(defn b+tree [b key-fn & {:keys [root? leaf?]
-                          :or {root? true
-                               leaf? true}}]
-  (let [children (if leaf?
-                   {}
-                   (rm/range-map :find-ceiling))]
-    (->B+Tree b 0 key-fn children root? leaf?)))
+(defn b+tree [b]
+  (->B+Tree b 0 (rm/range-map :find-ceiling nil) true))
