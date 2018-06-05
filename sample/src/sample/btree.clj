@@ -110,6 +110,9 @@
      nk
      (internal-node ks2 vs2)]))
 
+(defn- inode-insert [{:keys [ks vs] :as n} k v]
+  )
+
 (defn- leaf-node [ks vs]
   {:pre [(= (count vs)
             (count ks))]}
