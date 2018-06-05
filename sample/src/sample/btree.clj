@@ -99,7 +99,7 @@
   (loop [[k* & ks*] ks
          [v* & vs*] vs]
     (cond
-      (nil? k*)             [k* v*]
+      (nil? k*)             [::inf v*]
       (<= (compare k k*) 0) [k* v*]
       true                  (recur ks* vs*))))
 
@@ -114,15 +114,11 @@
      (internal-node ks2 vs2)]))
 
 (defn- inode-ins [{:keys [ks vs] :as n} k v]
-  (if-not (nil? k)
-    (let [[ks1 ks2] (split-with #(< (compare % k) 0) ks)
-          [vs1 vs2] (split-at (count ks1) vs)
-          nks       (concat ks1 [k] ks2)
-          nvs       (concat vs1 [v] vs2)]
-      (internal-node nks nvs))
-    (let [nks ks
-          nvs (-> vs butlast (concat [v]))]
-      (internal-node nks nvs))))
+  (let [[ks1 ks2] (split-with #(< (compare % k) 0) ks)
+        [vs1 vs2] (split-at (count ks1) vs)
+        nks       (concat ks1 [k] ks2)
+        nvs       (concat vs1 [v] vs2)]
+    (internal-node nks nvs)))
 
 (defn- inode-insert [{:keys [ks vs] :as n} k v]
   #_(let [nn (inode-ins n k v)]
