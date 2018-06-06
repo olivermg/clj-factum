@@ -88,10 +88,11 @@
 
 (declare insert*)
 
-(defn- internal-node [ks vs size]
+(defn- internal-node [b ks vs size]
   {:pre [(= (count vs)
             (inc (count ks)))]}
-  {:type :internal
+  {:b b
+   :type :internal
    :ks ks
    :vs vs
    :size size})
@@ -105,18 +106,18 @@
       (<= (compare k k*) 0) [k* v*]
       true                  (recur ks* vs*))))
 
-(defn- inode-split [{:keys [ks vs size] :as n}]
+(defn- inode-split [{:keys [b ks vs size] :as n}]
   (let [partition-size  (-> size (/ 2) Math/ceil int)
         [ks1 ks2]       (partition-all partition-size ks)
         [ks1 nk]        [(butlast ks1) (last ks1)]
         [vs1 vs2a vs2b] (partition-all partition-size vs)
         vs2             (concat vs2a vs2b)]
     #_(println "ISPLIT")
-    [(internal-node ks1 vs1 (dec partition-size))
+    [(internal-node b ks1 vs1 (dec partition-size))
      nk
-     (internal-node ks2 vs2 (- partition-size (rem size 2)))]))
+     (internal-node b ks2 vs2 (- partition-size (rem size 2)))]))
 
-(defn- inode-ins [{:keys [ks vs size] :as n} k v]
+(defn- inode-ins [{:keys [b ks vs size] :as n} k v]
   (if-not (= k ::inf)
     (let [[ks1 ks2] (split-with #(< (compare % k) 0) ks)
           [vs1 vs2] (split-at (count ks1) vs)
@@ -127,61 +128,63 @@
           nks       (concat ks1 [k] ks2)
           nvs       (concat vs1 [v] vs2)]
       #_(println "IINS" nks nvs)
-      (internal-node nks nvs nsize))
+      (internal-node b nks nvs nsize))
     (let [nvs (-> vs butlast (concat [v]))]
       #_(println "IINS (INF)" ks nvs)
-      (internal-node ks nvs size))))
+      (internal-node b ks nvs size))))
 
-(defn- inode-insert [{:keys [ks vs] :as n} k v]
+(defn- inode-insert [{:keys [b ks vs] :as n} k v]
   (let [[childk childv] (inode-lookup n k)
         [n1 nk n2]      (insert* childv k v)
         nn              (if (nil? n2)
                           (inode-ins n childk n1)
                           (-> (inode-ins n nk n1)
                               (inode-ins childk n2)))]
-    (if (>= (-> nn :ks count) 3)
+    (if (>= (-> nn :ks count) b)
       (inode-split nn)
       [nn])))
 
 
 (defn- leaf-node
-  ([ks vs size]
+  ([b ks vs size]
    {:pre [(= (count vs)
              (count ks))]}
-   {:type :leaf
+   {:b b
+    :type :leaf
     :m (->> (interleave ks vs)
             (apply sorted-map))
     :size size})
 
-  ([]
-   (leaf-node nil nil 0))
+  ([b]
+   (leaf-node b nil nil 0))
 
-  ([m size]
-   {:type :leaf
+  ([b m size]
+   {:b b
+    :type :leaf
     :m m
     :size size}))
 
 (defn- lnode-lookup [{:keys [m] :as n} k]
   [nil (get m k)])
 
-(defn- lnode-split [{:keys [m size] :as n}]
+(defn- lnode-split [{:keys [b m size] :as n}]
   (let [partition-size (-> size (/ 2) Math/ceil int)
         [ks1 ks2] (partition-all partition-size (keys m))
         m1 (apply dissoc m ks2)
         m2 (apply dissoc m ks1)]
     #_(println "LSPLIT" m1 m2)
-    [(leaf-node m1 partition-size)
+    [(leaf-node b m1 partition-size)
      (last ks1)
-     (leaf-node m2 (- partition-size (rem size 2)))]))
+     (leaf-node b m2 (- partition-size (rem size 2)))]))
 
-(defn- lnode-ins [{:keys [m size] :as n} k v]
+(defn- lnode-ins [{:keys [b m size] :as n} k v]
   (let [nm (assoc m k v)]
     #_(println "LINS" nm)
-    (leaf-node nm (inc size))))
+    (leaf-node b nm (inc size))))
 
-(defn- lnode-insert [{:keys [m] :as n} k v]
+(defn- lnode-insert [{:keys [b m] :as n} k v]
   (let [nn (lnode-ins n k v)]
-    (if (>= (-> nn :m count) 3)
+    (if (>= (-> nn :m count) b)
       (lnode-split nn)
       [nn])))
 
@@ -197,17 +200,17 @@
     :leaf     (lnode-insert n k v)))
 
 (defn- lookup* [{:keys [type] :as n} k]
-  (print "L")
+  #_(print "L")
   (case type
     :internal (inode-lookup n k)
     :leaf     (lnode-lookup n k)))
 
-(defn insert [n k v]
+(defn insert [{:keys [b] :as n} k v]
   #_(println "=== INSERT ===")
   (let [[n1 k n2] (insert* n k v)]
     (if (nil? n2)
       n1
-      (internal-node [k] [n1 n2] 1))))
+      (internal-node b [k] [n1 n2] 1))))
 
 (defn lookup [n k]
   #_(println "=== LOOKUP ===")
@@ -216,11 +219,11 @@
       (recur (lookup* v k))
       v)))
 
-(defn tree []
-  (leaf-node))
+(defn tree [b]
+  (leaf-node b))
 
 
-#_(-> (tree)
+#_(-> (tree 3)
     (insert 5 55)
     (insert 9 99)
     (insert 3 33)
@@ -229,15 +232,15 @@
     (insert 1 11)
     #_(lookup 3))
 
-#_(let [kvs (take 10000 (repeatedly #(let [k (-> (rand-int 9000)
-                                               (+ 1000))]
-                                     [k (str "v" k)])))
-      t (reduce (fn [t [k v]]
-                  (insert t k v))
-                (tree)
-                kvs)]
+#_(let [kvs (take 100000 (repeatedly #(let [k (-> (rand-int 9000000)
+                                                (+ 1000000))]
+                                      [k (str "v" k)])))
+      t (time (reduce (fn [t [k v]]
+                        (insert t k v))
+                      (tree 100)
+                      kvs))]
   [(first kvs)
-   (lookup t (-> kvs first first))])
+   (time (lookup t (-> kvs first first)))])
 
 
 (defrecord B+TreeNode [b size children leaf?]
