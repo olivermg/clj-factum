@@ -240,8 +240,9 @@
                  (->B+TreeLeafNode b (- partition-size (rem size 2)) m2)]))
 
             (ins [{:keys [b m size] :as n} k v]
-              (let [nm (assoc m k v)]
-                (->B+TreeLeafNode b (inc size) nm)))]
+              (let [nsize (if (contains? m k) size (inc size))
+                    nm (assoc m k v)]
+                (->B+TreeLeafNode b nsize nm)))]
 
       (let [nn (ins this k v)]
         (if (>= (-> nn :size) b)
