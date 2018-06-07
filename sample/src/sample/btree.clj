@@ -1,5 +1,6 @@
 (ns sample.btree
   (:require [sample.rangemap :as rm]
+            [sample.partiallycomparablekey :as pck]
             [clojure.tools.logging :as log]))
 
 
