@@ -1,6 +1,7 @@
 (ns sample.btree
   (:require [sample.rangemap :as rm]
             [sample.partiallycomparablekey :as pck]
+            [sample.memoryfactstore :as mfs]
             [clojure.tools.logging :as log]))
 
 
@@ -253,7 +254,14 @@
   TreeLookup
 
   (lookup [this k]
-    [k (get m k)]))
+    (if-let [v (get m k)]
+      [k [v]]
+      (when (< (count k) (-> m keys first count))
+        (let [klen (count k)
+              matching-keys (->> (keys m)
+                                 (filter #(= (compare (->> % (take klen) vec) k) 0)))]
+
+          [k (vec (vals (select-keys m matching-keys)))])))))
 
 
 (defrecord B+Tree [b root]
@@ -304,6 +312,17 @@
       k1 (first kv1)]
   #_(Thread/sleep 120000)
   [kv1 (count @ts) (time (lookup t k1))])
+
+#_(let [kvs (for [k1 [:a :b :c]
+                k2 [1 3 5 7 9]]
+            [[k1 k2] (str (name k1) k2)])
+      t (time (reduce (fn [t [k v]]
+                        (let [nt (insert t k v)]
+                          nt))
+                      (b+tree 3)
+                      kvs))]
+  (clojure.pprint/pprint t)
+  (lookup t [:a]))
 
 
 
