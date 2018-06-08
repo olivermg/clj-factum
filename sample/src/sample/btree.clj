@@ -177,6 +177,20 @@
       v)))
 
 
+(defn- cmp-keys [k1 k2]
+  (if (or (not (sequential? k1))
+          (not (sequential? k2)))
+    (compare k1 k2)
+    (let [ctor (cond (vector? k1) vec
+                     (list? k1)   list*)
+          kl1 (count k1)
+          kl2 (count k2)]
+      (cond
+        (= kl1 kl2) (compare k1 k2)
+        (< kl1 kl2) (compare k1 (->> k2 (take kl1) ctor))
+        (> kl1 kl2) (compare (->> k1 (take kl2) ctor) k2)))))
+
+
 (defrecord B+TreeInternalNode [b size ks vs]
 
   TreeModify
@@ -194,9 +208,9 @@
 
             (ins [{:keys [b ks vs size] :as n} k v]
               (if-not (= k ::inf)
-                (let [[ks1 ks2] (split-with #(< (compare % k) 0) ks)
+                (let [[ks1 ks2] (split-with #(< (cmp-keys % k) 0) ks)
                       [vs1 vs2] (split-at (count ks1) vs)
-                      replace?  (= (compare (first ks2) k) 0)
+                      replace?  (= (cmp-keys (first ks2) k) 0)
                       ks2       (if replace? (rest ks2) ks2)
                       vs2       (if replace? (rest vs2) vs2)
                       nsize     (if replace? size (inc size))
@@ -222,29 +236,31 @@
     (loop [[k* & ks*] ks
            [v* & vs*] vs]
       (cond
-        (nil? k*)             [::inf v*]
-        (<= (compare k k*) 0) [k* v*]
-        true                  (recur ks* vs*)))))
+        (nil? k*)              [::inf v*]
+        (<= (cmp-keys k k*) 0) [k* v*]
+        true                   (recur ks* vs*)))))
 
 
-(defrecord B+TreeLeafNode [b size m]
+(defrecord B+TreeLeafNode [b size m next]
 
   TreeModify
 
   (insert [this k v]
-    (letfn [(split [{:keys [b m size] :as n}]
+    (letfn [(split [{:keys [b m size next] :as n}]
               (let [partition-size (-> size (/ 2) Math/ceil int)
                     [ks1 ks2] (partition-all partition-size (keys m))
                     m1 (apply dissoc m ks2)
-                    m2 (apply dissoc m ks1)]
-                [(->B+TreeLeafNode b partition-size m1)
-                 (last ks1)
-                 (->B+TreeLeafNode b (- partition-size (rem size 2)) m2)]))
+                    m2 (apply dissoc m ks1)
+                    n1size partition-size
+                    n2size (- partition-size (rem size 2))
+                    n2 (->B+TreeLeafNode b n2size m2 next)
+                    n1 (->B+TreeLeafNode b n1size m1 n2)]
+                [n1 (last ks1) n2]))
 
-            (ins [{:keys [b m size] :as n} k v]
+            (ins [{:keys [b m size next] :as n} k v]
               (let [nsize (if (contains? m k) size (inc size))
                     nm (assoc m k v)]
-                (->B+TreeLeafNode b nsize nm)))]
+                (->B+TreeLeafNode b nsize nm next)))]
 
       (let [nn (ins this k v)]
         (if (>= (-> nn :size) b)
@@ -254,14 +270,24 @@
   TreeLookup
 
   (lookup [this k]
-    (if-let [v (get m k)]
-      [k [v]]
-      (when (< (count k) (-> m keys first count))
-        (let [klen (count k)
-              matching-keys (->> (keys m)
-                                 (filter #(= (compare (->> % (take klen) vec) k) 0)))]
+    (letfn [(range-lookup [{:keys [m next] :as this} klen]
+              (println "RANGE LOOKUP" k klen (keys m))
+              (when (<= (cmp-keys (-> m keys first) k) 0)
+                (println "  IN")
+                (let [matching-keys (->> (keys m)
+                                         (filter #(= (cmp-keys % k) 0)))]
+                  (println "  MK" (keys m) matching-keys)
+                  [k (concat (-> (select-keys m matching-keys)
+                                 vals
+                                 vec)
+                             (when-not (nil? next)
+                               (second (range-lookup next klen))))])))]
 
-          [k (vec (vals (select-keys m matching-keys)))])))))
+     (if-let [v (get m k)]
+       [k [v]]
+       (when (< (count k)
+                (-> m keys first count))
+         (range-lookup this (count k)))))))
 
 
 (defrecord B+Tree [b root]
@@ -285,7 +311,7 @@
 
 
 (defn b+tree [b]
-  (->B+Tree b (->B+TreeLeafNode b 0 (sorted-map))))
+  (->B+Tree b (->B+TreeLeafNode b 0 (sorted-map) nil)))
 
 
 #_(-> (b+tree 3)
