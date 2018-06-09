@@ -308,7 +308,7 @@
   t/TreeModifyable
 
   (insert [this k v]
-    (letfn [(neighbour-map [root]
+    (letfn [#_(neighbour-map [root]
               (let [nodes (iterate-leafnodes root)
                     prevs (concat [nil] nodes)
                     nexts (-> (rest nodes) (concat [nil]))]
@@ -324,7 +324,7 @@
             nroot (if (nil? n2)
                     n1
                     (->B+TreeInternalNode b 1 [k] [n1 n2]))]
-        (->B+Tree b nroot (neighbour-map nroot)))))
+        (->B+Tree b nroot {} #_(neighbour-map nroot)))))
 
   t/TreeLookupable
 
