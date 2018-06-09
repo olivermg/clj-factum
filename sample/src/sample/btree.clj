@@ -1,4 +1,5 @@
 (ns sample.btree
+  (:refer-clojure :rename {iterate iterate-clj})
   (:require [sample.rangemap :as rm]
             [sample.partiallycomparablekey :as pck]
             [sample.memoryfactstore :as mfs]
@@ -11,6 +12,9 @@
 
 (defprotocol TreeLookup
   (lookup [this k]))
+
+(defprotocol TreeIterable
+  (iterate [this]))
 
 
 
@@ -238,7 +242,12 @@
       (cond
         (nil? k*)              [::inf v*]
         (<= (cmp-keys k k*) 0) [k* v*]
-        true                   (recur ks* vs*)))))
+        true                   (recur ks* vs*))))
+
+  TreeIterable
+
+  (iterate [this]
+    (lazy-seq (mapcat iterate vs))))
 
 
 (defrecord B+TreeLeafNode [b size m]
@@ -286,7 +295,12 @@
        [k [v]]
        (when (< (count k)
                 (-> m keys first count))
-         (range-lookup this (count k)))))))
+         (range-lookup this (count k))))))
+
+  TreeIterable
+
+  (iterate [this]
+    (lazy-seq (vals m))))
 
 
 (defrecord B+Tree [b root]
@@ -306,7 +320,12 @@
     (loop [[_ v] (lookup root k)]
       (if (satisfies? TreeLookup v)
         (recur (lookup v k))
-        v))))
+        v)))
+
+  TreeIterable
+
+  (iterate [this]
+    (iterate root)))
 
 
 (defn b+tree [b]
