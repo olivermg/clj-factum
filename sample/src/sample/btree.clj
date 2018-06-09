@@ -1,20 +1,10 @@
 (ns sample.btree
   (:refer-clojure :rename {iterate iterate-clj})
-  (:require [sample.rangemap :as rm]
+  (:require [sample.tree :as t]
+            [sample.rangemap :as rm]
             [sample.partiallycomparablekey :as pck]
             [sample.memoryfactstore :as mfs]
             [clojure.tools.logging :as log]))
-
-
-
-(defprotocol TreeModify
-  (insert [this k v]))
-
-(defprotocol TreeLookup
-  (lookup [this k]))
-
-(defprotocol TreeIterable
-  (iterate [this]))
 
 
 
@@ -181,6 +171,16 @@
       v)))
 
 
+(defprotocol B+TreeModifyable
+  (insert [this k v]))
+
+(defprotocol B+TreeLookupable
+  (lookup [this k]))
+
+(defprotocol B+TreeLeafNodeIterable
+  (iterate-leafnodes [this]))
+
+
 (defn- cmp-keys [k1 k2]
   (if (or (not (sequential? k1))
           (not (sequential? k2)))
@@ -197,7 +197,7 @@
 
 (defrecord B+TreeInternalNode [b size ks vs]
 
-  TreeModify
+  B+TreeModifyable
 
   (insert [this k v]
     (letfn [(split [{:keys [b ks vs size] :as n}]
@@ -234,7 +234,7 @@
           (split nn)
           [nn]))))
 
-  TreeLookup
+  B+TreeLookupable
 
   (lookup [this k]
     (loop [[k* & ks*] ks
@@ -244,15 +244,15 @@
         (<= (cmp-keys k k*) 0) [k* v*]
         true                   (recur ks* vs*))))
 
-  TreeIterable
+  B+TreeLeafNodeIterable
 
-  (iterate [this]
-    (lazy-seq (mapcat iterate vs))))
+  (iterate-leafnodes [this]
+    (lazy-seq (mapcat iterate-leafnodes vs))))
 
 
 (defrecord B+TreeLeafNode [b size m]
 
-  TreeModify
+  B+TreeModifyable
 
   (insert [this k v]
     (letfn [(split [{:keys [b m size] :as n}]
@@ -276,7 +276,7 @@
           (split nn)
           [nn]))))
 
-  TreeLookup
+  B+TreeLookupable
 
   (lookup [this k]
     (letfn [(range-lookup [{:keys [m] :as this} klen]
@@ -297,24 +297,36 @@
                 (-> m keys first count))
          (range-lookup this (count k))))))
 
-  TreeIterable
+  B+TreeLeafNodeIterable
 
-  (iterate [this]
-    (lazy-seq (vals m))))
+  (iterate-leafnodes [this]
+    [this]))
 
 
-(defrecord B+Tree [b root]
+(defrecord B+Tree [b root leaf-neighbours]
 
-  TreeModify
+  t/TreeModifyable
 
   (insert [this k v]
-    (let [[n1 k n2] (insert root k v)
-          nroot (if (nil? n2)
-                  n1
-                  (->B+TreeInternalNode b 1 [k] [n1 n2]))]
-      (->B+Tree b nroot)))
+    (letfn [(neighbour-map [root]
+              (let [nodes (iterate-leafnodes root)
+                    prevs (concat [nil] nodes)
+                    nexts (-> (rest nodes) (concat [nil]))]
+                (->> (map (fn [node prev next]
+                            [node prev next])
+                          nodes prevs nexts)
+                     (reduce (fn [s [node prev next]]
+                               (assoc s node {:prev prev
+                                              :next next}))
+                             {}))))]
 
-  TreeLookup
+      (let [[n1 k n2] (insert root k v)
+            nroot (if (nil? n2)
+                    n1
+                    (->B+TreeInternalNode b 1 [k] [n1 n2]))]
+        (->B+Tree b nroot (neighbour-map nroot)))))
+
+  t/TreeLookupable
 
   (lookup [this k]
     (loop [[_ v] (lookup root k)]
@@ -322,31 +334,31 @@
         (recur (lookup v k))
         v)))
 
-  TreeIterable
+  B+TreeLeafNodeIterable
 
-  (iterate [this]
-    (iterate root)))
+  (iterate-leafnodes [this]
+    (iterate-leafnodes root)))
 
 
 (defn b+tree [b]
-  (->B+Tree b (->B+TreeLeafNode b 0 (sorted-map))))
+  (->B+Tree b (->B+TreeLeafNode b 0 (sorted-map)) {}))
 
 
 #_(-> (b+tree 3)
-    (insert 5 55)
-    (insert 9 99)
-    (insert 3 33)
-    (insert 4 44)
-    (insert 2 22)
-    (insert 1 11)
-    #_(lookup 3))
+    (t/insert 5 55)
+    (t/insert 9 99)
+    (t/insert 3 33)
+    (t/insert 4 44)
+    (t/insert 2 22)
+    (t/insert 1 11)
+    #_(t/lookup 3))
 
 #_(let [kvs (take 100000 (repeatedly #(let [k (-> (rand-int 9000000)
                                                 (+ 1000000))]
                                       [k (str "v" k)])))
       ts (atom [])
       t (time (reduce (fn [t [k v]]
-                        (let [nt (insert t k v)]
+                        (let [nt (t/insert t k v)]
                           (swap! ts #(take 10 (conj % nt)))
                           #_(reset! ts t)
                           nt))
@@ -355,18 +367,18 @@
       kv1 (first kvs)
       k1 (first kv1)]
   #_(Thread/sleep 120000)
-  [kv1 (count @ts) (time (lookup t k1))])
+  [kv1 (count @ts) (time (t/lookup t k1))])
 
 #_(let [kvs (for [k1 [:a :b :c]
                 k2 [1 3 5 7 9]]
             [[k1 k2] (str (name k1) k2)])
       t (time (reduce (fn [t [k v]]
-                        (let [nt (insert t k v)]
+                        (let [nt (t/insert t k v)]
                           nt))
                       (b+tree 3)
                       kvs))]
   (clojure.pprint/pprint t)
-  (lookup t [:a]))
+  (t/lookup t [:a]))
 
 
 
