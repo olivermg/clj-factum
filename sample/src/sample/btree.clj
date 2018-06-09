@@ -175,7 +175,7 @@
   (insert [this k v]))
 
 (defprotocol B+TreeLookupable
-  (lookup [this k]))
+  (lookup [this k leaf-neighbours]))
 
 (defprotocol B+TreeLeafNodeIterable
   (iterate-leafnodes [this]))
@@ -224,7 +224,7 @@
                 (let [nvs (-> vs butlast (concat [v]))]
                   (->B+TreeInternalNode b size ks nvs))))]
 
-      (let [[childk childv] (lookup this k)
+      (let [[childk childv] (lookup this k {})
             [n1 nk n2]      (insert childv k v)
             nn              (if (nil? n2)
                               (ins this childk n1)
@@ -236,7 +236,7 @@
 
   B+TreeLookupable
 
-  (lookup [this k]
+  (lookup [this k leaf-neighbours]
     (loop [[k* & ks*] ks
            [v* & vs*] vs]
       (cond
@@ -278,7 +278,7 @@
 
   B+TreeLookupable
 
-  (lookup [this k]
+  (lookup [this k leaf-neighbours]
     (letfn [(range-lookup [{:keys [m] :as this} klen]
               (println "RANGE LOOKUP" k klen (keys m))
               (when (<= (cmp-keys (-> m keys first) k) 0)
@@ -329,9 +329,9 @@
   t/TreeLookupable
 
   (lookup [this k]
-    (loop [[_ v] (lookup root k)]
-      (if (satisfies? TreeLookup v)
-        (recur (lookup v k))
+    (loop [[_ v] (lookup root k leaf-neighbours)]
+      (if (satisfies? B+TreeLookupable v)
+        (recur (lookup v k leaf-neighbours))
         v)))
 
   B+TreeLeafNodeIterable
