@@ -273,7 +273,6 @@
     (letfn [(range-lookup [{:keys [m] :as this} klen]
               (println "RANGE LOOKUP" k klen (keys m))
               (when (<= (cmp-keys (-> m keys first) k) 0)
-                (println "  IN")
                 (let [matching-keys (->> (keys m)
                                          (filter #(= (cmp-keys % k) 0)))]
                   (println "  MK" (keys m) matching-keys)
