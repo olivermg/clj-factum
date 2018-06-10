@@ -175,7 +175,8 @@
   (insert [this k v]))
 
 (defprotocol B+TreeLookupable
-  (lookup [this k leaf-neighbours]))
+  (lookup [this k])
+  (lookup-range [this k klen leaf-neighbours]))
 
 (defprotocol B+TreeLeafNodeIterable
   (iterate-leafnodes [this]))
@@ -224,7 +225,7 @@
                 (let [nvs (-> vs butlast (concat [v]))]
                   (->B+TreeInternalNode b size ks nvs))))]
 
-      (let [[childk childv] (lookup this k {})
+      (let [[childk childv] (lookup this k)
             [n1 nk n2]      (insert childv k v)
             nn              (if (nil? n2)
                               (ins this childk n1)
@@ -236,13 +237,16 @@
 
   B+TreeLookupable
 
-  (lookup [this k leaf-neighbours]
+  (lookup [this k]
     (loop [[k* & ks*] ks
            [v* & vs*] vs]
       (cond
         (nil? k*)              [::inf v*]
         (<= (cmp-keys k k*) 0) [k* v*]
         true                   (recur ks* vs*))))
+
+  (lookup-range [this k _ _]
+    (lookup this k))
 
   B+TreeLeafNodeIterable
 
@@ -278,24 +282,20 @@
 
   B+TreeLookupable
 
-  (lookup [this k leaf-neighbours]
-    (letfn [(range-lookup [{:keys [m] :as this} klen]
-              (println "RANGE LOOKUP" k klen (keys m))
-              (when (<= (cmp-keys (-> m keys first) k) 0)
-                (let [matching-keys (->> (keys m)
-                                         (filter #(= (cmp-keys % k) 0)))]
-                  (println "  MK" (keys m) matching-keys)
-                  [k (concat (-> (select-keys m matching-keys)
-                                 vals
-                                 vec)
-                             #_(when-not (nil? next)
-                               (second (range-lookup next klen))))])))]
+  (lookup [this k]
+    [k (get m k)])
 
-     (if-let [v (get m k)]
-       [k [v]]
-       (when (< (count k)
-                (-> m keys first count))
-         (range-lookup this (count k))))))
+  (lookup-range [this k klen leaf-neighbours]
+    (println "RANGE LOOKUP" k klen (keys m))
+    (when (<= (cmp-keys (-> m keys first) k) 0)
+      (let [matching-keys (->> (keys m)
+                               (filter #(= (cmp-keys % k) 0)))]
+        (println "  MK" (keys m) matching-keys)
+        [k (concat (-> (select-keys m matching-keys)
+                       vals
+                       vec)
+                   (when-let [next (get leaf-neighbours this)]
+                     (second (lookup-range next k klen leaf-neighbours))))])))
 
   B+TreeLeafNodeIterable
 
@@ -303,22 +303,28 @@
     [this]))
 
 
+(defn lookup* [node lookup-fn]
+  (loop [[_ v] (lookup-fn node)]
+    (if (satisfies? B+TreeLookupable v)
+      (recur (lookup-fn v))
+      v)))
+
 (defrecord B+Tree [b root leaf-neighbours]
 
   t/TreeModifyable
 
   (insert [this k v]
     (letfn [#_(neighbour-map [root]
-              (let [nodes (iterate-leafnodes root)
-                    prevs (concat [nil] nodes)
-                    nexts (-> (rest nodes) (concat [nil]))]
-                (->> (map (fn [node prev next]
-                            [node prev next])
-                          nodes prevs nexts)
-                     (reduce (fn [s [node prev next]]
-                               (assoc s node {:prev prev
-                                              :next next}))
-                             {}))))]
+                (let [nodes (iterate-leafnodes root)
+                      prevs (concat [nil] nodes)
+                      nexts (-> (rest nodes) (concat [nil]))]
+                  (->> (map (fn [node prev next]
+                              [node prev next])
+                            nodes prevs nexts)
+                       (reduce (fn [s [node prev next]]
+                                 (assoc s node {:prev prev
+                                                :next next}))
+                               {}))))]
 
       (let [[n1 k n2] (insert root k v)
             nroot (if (nil? n2)
@@ -329,10 +335,10 @@
   t/TreeLookupable
 
   (lookup [this k]
-    (loop [[_ v] (lookup root k leaf-neighbours)]
-      (if (satisfies? B+TreeLookupable v)
-        (recur (lookup v k leaf-neighbours))
-        v)))
+    (lookup* root #(lookup % k)))
+
+  (lookup-range [this k]
+    (lookup* root #(lookup-range % k (count k) leaf-neighbours)))
 
   B+TreeLeafNodeIterable
 
