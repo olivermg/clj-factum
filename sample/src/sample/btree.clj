@@ -7,6 +7,11 @@
             [clojure.tools.logging :as log]))
 
 
+(defn assoc-if-not-nil [m k v]
+  (if-not (nil? k)
+    (assoc m k v)
+    m))
+
 
 #_(defrecord BinaryTreeNode [k* v* l r]
 
@@ -172,7 +177,7 @@
 
 
 (defprotocol B+TreeModifyable
-  (insert [this k v]))
+  (insert [this k v leaf-neighbours]))
 
 (defprotocol B+TreeLookupable
   (lookup [this k])
@@ -200,7 +205,7 @@
 
   B+TreeModifyable
 
-  (insert [this k v]
+  (insert [this k v leaf-neighbours]
     (letfn [(split [{:keys [b ks vs size] :as n}]
               (let [partition-size  (-> size (/ 2) Math/ceil int)
                     [ks1 ks2]       (partition-all partition-size ks)
@@ -209,7 +214,8 @@
                     vs2             (concat vs2a vs2b)]
                 [(->B+TreeInternalNode b (dec partition-size) ks1 vs1)
                  nk
-                 (->B+TreeInternalNode b (- partition-size (rem size 2)) ks2 vs2)]))
+                 (->B+TreeInternalNode b (- partition-size (rem size 2)) ks2 vs2)
+                 leaf-neighbours]))
 
             (ins [{:keys [b ks vs size] :as n} k v]
               (if-not (= k ::inf)
@@ -225,15 +231,15 @@
                 (let [nvs (-> vs butlast (concat [v]))]
                   (->B+TreeInternalNode b size ks nvs))))]
 
-      (let [[childk childv] (lookup this k)
-            [n1 nk n2]      (insert childv k v)
-            nn              (if (nil? n2)
-                              (ins this childk n1)
-                              (-> (ins this nk n1)
-                                  (ins childk n2)))]
+      (let [[childk childv]  (lookup this k)
+            [n1 nk n2 nlnbs] (insert childv k v leaf-neighbours)
+            nn               (if (nil? n2)
+                               (ins this childk n1)
+                               (-> (ins this nk n1)
+                                   (ins childk n2)))]
         (if (>= (-> nn :size) b)
           (split nn)
-          [nn]))))
+          [nn nil nil nlnbs]))))
 
   B+TreeLookupable
 
@@ -258,8 +264,31 @@
 
   B+TreeModifyable
 
-  (insert [this k v]
-    (letfn [(split [{:keys [b m size] :as n}]
+  (insert [this k v leaf-neighbours]
+    (letfn [(insert-leaf-neighbours [n n1]
+              (let [{pleaf :prev nleaf :next} (get leaf-neighbours n)
+                    {ppleaf :prev}            (when-not (nil? pleaf)
+                                                (get leaf-neighbours pleaf))
+                    {nnleaf :next}            (when-not (nil? nleaf)
+                                                (get leaf-neighbours nleaf))]
+                (-> leaf-neighbours
+                    (assoc-if-not-nil pleaf {:prev ppleaf :next n1})
+                    (assoc-if-not-nil n1    {:prev pleaf  :next nleaf})
+                    (assoc-if-not-nil nleaf {:prev n1     :next nnleaf}))))
+
+            (update-leaf-neighbours [n n1 n2]
+              (let [{pleaf :prev nleaf :next} (get leaf-neighbours n)
+                    {ppleaf :prev}            (when-not (nil? pleaf)
+                                                (get leaf-neighbours pleaf))
+                    {nnleaf :next}            (when-not (nil? nleaf)
+                                                (get leaf-neighbours nleaf))]
+                (-> leaf-neighbours
+                    (assoc-if-not-nil pleaf {:prev ppleaf :next n1})
+                    (assoc-if-not-nil n1    {:prev pleaf  :next n2})
+                    (assoc-if-not-nil n2    {:prev n1     :next nleaf})
+                    (assoc-if-not-nil nleaf {:prev n2     :next nnleaf}))))
+
+            (split [{:keys [b m size] :as n}]
               (let [partition-size (-> size (/ 2) Math/ceil int)
                     [ks1 ks2] (partition-all partition-size (keys m))
                     m1 (apply dissoc m ks2)
@@ -267,8 +296,10 @@
                     n1size partition-size
                     n2size (- partition-size (rem size 2))
                     n2 (->B+TreeLeafNode b n2size m2)
-                    n1 (->B+TreeLeafNode b n1size m1)]
-                [n1 (last ks1) n2]))
+                    n1 (->B+TreeLeafNode b n1size m1)
+                    nleafnbs (update-leaf-neighbours n n1 n2)]
+                (println "NLEAFNBS" nleafnbs)
+                [n1 (last ks1) n2 nleafnbs]))
 
             (ins [{:keys [b m size] :as n} k v]
               (let [nsize (if (contains? m k) size (inc size))
@@ -278,7 +309,7 @@
       (let [nn (ins this k v)]
         (if (>= (-> nn :size) b)
           (split nn)
-          [nn]))))
+          [nn nil nil (insert-leaf-neighbours this nn)]))))
 
   B+TreeLookupable
 
@@ -326,11 +357,11 @@
                                                 :next next}))
                                {}))))]
 
-      (let [[n1 k n2] (insert root k v)
+      (let [[n1 k n2 nlnbs] (insert root k v leaf-neighbours)
             nroot (if (nil? n2)
                     n1
                     (->B+TreeInternalNode b 1 [k] [n1 n2]))]
-        (->B+Tree b nroot {} #_(neighbour-map nroot)))))
+        (->B+Tree b nroot nlnbs))))
 
   t/TreeLookupable
 
