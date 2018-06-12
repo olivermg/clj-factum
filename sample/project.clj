@@ -9,6 +9,8 @@
                  [org.clojure/core.async "0.4.474"]
                  [org.clojure/tools.logging "0.4.1"]
 
+                 [clj-karabiner "0.1.1-SNAPSHOT"]
+
                  #_[clj-factum/serverlib "0.1.1-SNAPSHOT"]
                  #_[clj-factum/embedded-transport "0.1.1-SNAPSHOT"]
                  #_[clj-factum/clientlib "0.1.1-SNAPSHOT"]]
