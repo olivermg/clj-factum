@@ -401,15 +401,16 @@
                 k2 ["x" "y" "z"]
                 k3 (range 50)]
             [[k1 k2 k3] (str (name k1) k2 (format "%02d" k3))])
-      t (-> (reduce (fn [t [k v]]
-                      (let [nt (t/insert t k v)]
-                        nt))
-                    (b+tree 3)
-                    kvs)
-            time
-            (t/insert [:b "y" 3] "____"))]
+      t1 (-> (reduce (fn [t [k v]]
+                       (let [nt (t/insert t k v)]
+                         nt))
+                     (b+tree 3)
+                     kvs)
+             time)
+      t2 (t/insert t1 [:b "y" 3] "____")]
   #_(clojure.pprint/pprint t)
-  (t/lookup-range t [:b]))
+  [(t/lookup t1 [:b "y" 3])
+   (t/lookup t2 [:b "y" 3])])
 
 
 
