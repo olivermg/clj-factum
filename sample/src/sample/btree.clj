@@ -359,8 +359,8 @@
   (lookup [this k]
     (lookup* root #(lookup % k)))
 
-  (lookup-range [this k]
-    (lookup* root #(lookup-range % k (count k) leaf-neighbours)))
+  (lookup-range* [this k]
+    (lookup* root #(lookup-range % (or k []) (count k) leaf-neighbours)))
 
   B+TreeLeafNodeIterable
 
@@ -399,13 +399,15 @@
 
 #_(let [kvs (for [k1 [:a :b :c]
                 k2 ["x" "y" "z"]
-                k3 [1 3 5 7 9]]
-            [[k1 k2 k3] (str (name k1) k2 k3)])
-      t (time (reduce (fn [t [k v]]
-                        (let [nt (t/insert t k v)]
-                          nt))
-                      (b+tree 3)
-                      kvs))]
+                k3 (range 50)]
+            [[k1 k2 k3] (str (name k1) k2 (format "%02d" k3))])
+      t (-> (reduce (fn [t [k v]]
+                      (let [nt (t/insert t k v)]
+                        nt))
+                    (b+tree 3)
+                    kvs)
+            time
+            (t/insert [:b "y" 3] "____"))]
   #_(clojure.pprint/pprint t)
   (t/lookup-range t [:b]))
 
