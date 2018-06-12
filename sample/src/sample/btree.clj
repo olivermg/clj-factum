@@ -397,8 +397,8 @@
   #_(Thread/sleep 120000)
   [kv1 (count @ts) (time (t/lookup t k1))])
 
-#_(let [kvs (for [k1 [:a :b :c]
-                k2 ["x" "y" "z"]
+#_(let [kvs (for [k1 [:c :a :b]
+                k2 ["x" "z" "y"]
                 k3 (range 50)]
             [[k1 k2 k3] (str (name k1) k2 (format "%02d" k3))])
       t1 (-> (reduce (fn [t [k v]]
@@ -410,8 +410,8 @@
       t2 (-> (t/insert t1 [:b "y" 3] "____")
              time)]
   #_(clojure.pprint/pprint t)
-  [(t/lookup t1 [:b "y" 3])
-   (t/lookup t2 [:b "y" 3])])
+  [(time (t/lookup-range t1 [:b "y"]))
+   (time (t/lookup-range t2 [:b "y"]))])
 
 
 
