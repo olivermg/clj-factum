@@ -407,7 +407,8 @@
                      (b+tree 3)
                      kvs)
              time)
-      t2 (t/insert t1 [:b "y" 3] "____")]
+      t2 (-> (t/insert t1 [:b "y" 3] "____")
+             time)]
   #_(clojure.pprint/pprint t)
   [(t/lookup t1 [:b "y" 3])
    (t/lookup t2 [:b "y" 3])])
