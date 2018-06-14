@@ -13,7 +13,9 @@
 
                  #_[clj-factum/serverlib "0.1.1-SNAPSHOT"]
                  #_[clj-factum/embedded-transport "0.1.1-SNAPSHOT"]
-                 #_[clj-factum/clientlib "0.1.1-SNAPSHOT"]]
+                 #_[clj-factum/clientlib "0.1.1-SNAPSHOT"]
+
+                 [spootnik/kinsky "0.1.22"]]
 
   :main ^:skip-aot sample.core
 
