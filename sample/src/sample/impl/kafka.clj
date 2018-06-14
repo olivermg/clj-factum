@@ -6,7 +6,7 @@
             [sample.pubsub :as ps]))
 
 
-(defrecord KafkaFactStore []
+(defrecord KafkaFactStore [subscribers]
 
   fs/FactStoreWriter
 
@@ -21,11 +21,15 @@
   ps/Publisher
 
   (subscribe [this subscriber]
-    )
+    (->KafkaFactStore (assoc subscribers subscriber true)))
 
   (unsubscribe [this subscriber]
-    ))
+    (->KafkaFactStore (dissoc subscribers subscriber))))
 
 
-(defn kafka-factstore []
-  (->KafkaFactStore))
+(defn kafka-factstore
+  ([subscriber & subscribers]
+   (->KafkaFactStore (zipmap (cons subscriber subscribers)
+                             (repeat true))))
+  ([]
+   (->KafkaFactStore nil)))
